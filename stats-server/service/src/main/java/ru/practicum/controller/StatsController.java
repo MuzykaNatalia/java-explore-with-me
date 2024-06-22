@@ -32,10 +32,10 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> getStats(@RequestParam @DateTimeFormat(pattern = PATTERN_DATE)
-                                       @NotNull LocalDateTime start,
-                                       @RequestParam @DateTimeFormat(pattern = PATTERN_DATE)
-                                       @NotNull LocalDateTime end,
+    public List<ViewStatsDto> getStats(@RequestParam @DateTimeFormat(pattern = PATTERN_DATE) @NotNull
+                                           LocalDateTime start,
+                                       @RequestParam @DateTimeFormat(pattern = PATTERN_DATE) @NotNull
+                                           LocalDateTime end,
                                        @RequestParam(required = false) List<String> uris,
                                        @RequestParam(defaultValue = "false") Boolean unique) {
         log.info("GET /stats: request for statistics on visits: start={}, end={}, uris={}, unique={}",
