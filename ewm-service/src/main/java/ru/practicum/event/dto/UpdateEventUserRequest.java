@@ -7,37 +7,30 @@ import ru.practicum.location.model.Location;
 import ru.practicum.user.state.UserStateAction;
 
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode // Данные для изменения информации о событии.
-public class UpdateEventUserRequest { // Если поле в запросе не указано (равно null) - значит изменение этих данных не треубется.
-    @NotBlank
+@EqualsAndHashCode
+public class UpdateEventUserRequest {
     @Length(min = 20, max = 2000)
-    private String annotation; // Новое краткое описание события
-    @NotNull
+    private String annotation;
     @Min(1L)
-    private Long category; // Новая категория
-    @NotBlank
+    private Long category;
     @Length(min = 20, max = 7000)
-    private String description; // Новое описание события
-    @NotNull
+    private String description;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDate; // Новые дата и время на которые намечено событие.
-    @NotNull
-    private Location location; // Широта и долгота места проведения события
-    private Boolean paid = false; // Новое значение флага о платности мероприятия
+    private LocalDateTime eventDate;
+    private Location location;
+    private Boolean paid;
     @Min(0)
-    private Integer participantLimit = 0; // Новый лимит пользователей
-    private Boolean requestModeration = true; // Нужна ли пре-модерация заявок на участие.
+    private Integer participantLimit;
+    private Boolean requestModeration;
     private UserStateAction stateAction;
-    @NotBlank
     @Length(min = 3, max = 120)
-    private String title; // Заголовок события
+    private String title;
 }

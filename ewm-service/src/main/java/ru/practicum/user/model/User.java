@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "users")
+@ToString
 @Getter
 @Setter
 @Builder
@@ -16,7 +17,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
+    private String name;
     @Column(unique = true)
     private String email;
-    private String name;
 }

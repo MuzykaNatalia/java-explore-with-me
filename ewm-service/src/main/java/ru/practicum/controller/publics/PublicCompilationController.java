@@ -12,15 +12,15 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/compilations")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PublicCompilationController {
     private final CompilationService compilationService;
 
     @GetMapping
-    public List<CompilationDto> getCompilationsEvents(@RequestParam @NotNull Boolean pinned,
+    public List<CompilationDto> getCompilationsEvents(@RequestParam(required = false) Boolean pinned,
                                                       @RequestParam(defaultValue = "0", required = false) Integer from,
                                                       @RequestParam(defaultValue = "10", required = false) Integer size) {
         log.info("GET /compilations: request get compilations pinned={} events, from={}, size={}", pinned, from, size);

@@ -1,17 +1,132 @@
 package ru.practicum.event.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.NewEventDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import ru.practicum.category.mapper.CategoryMapper;
+import ru.practicum.category.model.Category;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
+import ru.practicum.location.mapper.LocationMapper;
+import ru.practicum.location.model.Location;
+import ru.practicum.user.mapper.UserMapper;
+import ru.practicum.user.model.User;
 
-@Mapper(componentModel = "spring")
-public interface EventMapper {
-    @Mapping(target = "paid", source = "paid", defaultValue = "false")
-    @Mapping(target = "participantLimit", source = "participantLimit", defaultValue = "0")
-    @Mapping(target = "requestModeration", source = "requestModeration", defaultValue = "true")
-    Event toEvent(NewEventDto newEventDto);
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    EventFullDto toEventFullDto(Event event);
+import static ru.practicum.event.state.EventState.PENDING;
+
+@Component
+@RequiredArgsConstructor
+public class EventMapper {
+    private final UserMapper userMapper;
+    private final CategoryMapper categoryMapper;
+    private final LocationMapper locationMapper;
+
+    public Event toEvent(NewEventDto newEventDto, Category category, User initiator, Location location) {
+        return Event.builder()
+                .annotation(newEventDto.getAnnotation())
+                .category(category)
+                .confirmedRequests(0)
+                .createdOn(LocalDateTime.now())
+                .description(newEventDto.getDescription())
+                .eventDate(newEventDto.getEventDate())
+                .initiator(initiator)
+                .location(location)
+                .paid(newEventDto.getPaid() != null ? newEventDto.getPaid() : false)
+                .participantLimit(newEventDto.getParticipantLimit() != null ? newEventDto.getParticipantLimit() : 0)
+                .requestModeration(
+                        newEventDto.getRequestModeration() != null ? newEventDto.getRequestModeration() : true)
+                .eventState(PENDING)
+                .title(newEventDto.getTitle())
+                .views(0L)
+                .build();
+    }
+
+    public Event toEvent(Event oldEvent, UpdateEventUserRequest request, Category categoryNew) {
+        return Event.builder()
+                .id(oldEvent.getId())
+                .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
+                .category(request.getCategory() != null ? categoryNew : oldEvent.getCategory())
+                .confirmedRequests(oldEvent.getConfirmedRequests())
+                .createdOn(oldEvent.getCreatedOn())
+                .description(request.getDescription() != null ? request.getDescription() : oldEvent.getDescription())
+                .eventDate(request.getEventDate() != null ? request.getEventDate() : oldEvent.getEventDate())
+                .initiator(oldEvent.getInitiator())
+                .location(request.getLocation() != null ? request.getLocation() : oldEvent.getLocation())
+                .paid(request.getPaid() != null ? request.getPaid() : oldEvent.getPaid())
+                .participantLimit(request.getParticipantLimit() != null
+                        ? request.getParticipantLimit() : oldEvent.getParticipantLimit())
+                .publishedOn(oldEvent.getPublishedOn())
+                .requestModeration(request.getRequestModeration() != null
+                        ? request.getRequestModeration() : oldEvent.getRequestModeration())
+                .title(request.getTitle() != null ? request.getTitle() : oldEvent.getTitle())
+                .views(oldEvent.getViews())
+                .build();
+    }
+
+    public Event toEvent(Event oldEvent, UpdateEventAdminRequest request, Category categoryNew) {
+        return Event.builder()
+                .id(oldEvent.getId())
+                .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
+                .category(request.getCategory() != null ? categoryNew : oldEvent.getCategory())
+                .confirmedRequests(oldEvent.getConfirmedRequests())
+                .createdOn(oldEvent.getCreatedOn())
+                .description(request.getDescription() != null ? request.getDescription() : oldEvent.getDescription())
+                .eventDate(request.getEventDate() != null ? request.getEventDate() : oldEvent.getEventDate())
+                .initiator(oldEvent.getInitiator())
+                .location(request.getLocation())
+                .paid(request.getPaid() != null ? request.getPaid() : oldEvent.getPaid())
+                .participantLimit(request.getParticipantLimit() != null
+                        ? request.getParticipantLimit() : oldEvent.getParticipantLimit())
+                .publishedOn(oldEvent.getPublishedOn())
+                .requestModeration(request.getRequestModeration() != null
+                        ? request.getRequestModeration() : oldEvent.getRequestModeration())
+                .title(request.getTitle() != null ? request.getTitle() : oldEvent.getTitle())
+                .views(oldEvent.getViews())
+                .build();
+    }
+
+    public EventShortDto toEventShortDto(Event event) {
+        return EventShortDto.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(categoryMapper.toCategoryDto(event.getCategory()))
+                .confirmedRequests(event.getConfirmedRequests())
+                .eventDate(event.getEventDate())
+                .initiator(userMapper.toUserShortDto(event.getInitiator()))
+                .paid(event.getPaid())
+                .title(event.getTitle())
+                .views(event.getViews())
+                .build();
+    }
+
+    public List<EventShortDto> toEventShortDtoList(List<Event> eventList) {
+        return eventList.stream().map(this::toEventShortDto).collect(Collectors.toList());
+    }
+
+    public EventFullDto toEventFullDto(Event event) {
+        return EventFullDto.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(categoryMapper.toCategoryDto(event.getCategory()))
+                .confirmedRequests(event.getConfirmedRequests())
+                .createdOn(event.getCreatedOn())
+                .description(event.getDescription())
+                .eventDate(event.getEventDate())
+                .initiator(userMapper.toUserShortDto(event.getInitiator()))
+                .location(locationMapper.toLocationDto(event.getLocation()))
+                .paid(event.getPaid())
+                .participantLimit(event.getParticipantLimit())
+                .requestModeration(event.getRequestModeration())
+                .state(event.getEventState())
+                .title(event.getTitle())
+                .views(event.getViews())
+                .build();
+    }
+
+    public List<EventFullDto> toEventFullDtoList(List<Event> event) {
+        return event.stream().map(this::toEventFullDto).collect(Collectors.toList());
+    }
 }

@@ -2,10 +2,10 @@ package ru.practicum.exceptions;
 
 import java.util.List;
 
-public class ConflictException extends RuntimeException {
+public class ValidationException extends RuntimeException {
     private final List<String> errorMessages;
 
-    public ConflictException(final String message, final List<String> errorMessages) {
+    public ValidationException(final String message, final List<String> errorMessages) {
         super(message);
         this.errorMessages = errorMessages;
     }

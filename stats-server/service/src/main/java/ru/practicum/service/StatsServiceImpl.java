@@ -50,7 +50,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private void checkTime(LocalDateTime start, LocalDateTime end) {
-        if (end.isBefore(start) || end.equals(start)) {
+        if (end.isBefore(start)) {
             log.warn("GET /stats: End time cannot be before or equals than start time: start={}, end={}", start, end);
             throw new EndTimeBeforeStartTimeException("End time cannot be before than start time");
         }

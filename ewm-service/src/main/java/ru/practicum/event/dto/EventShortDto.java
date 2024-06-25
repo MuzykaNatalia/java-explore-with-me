@@ -8,18 +8,19 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class EventShortDto { // Краткая информация о событии
+public class EventShortDto {
     private Long id;
-    private String annotation; // Краткое описание события
+    private String annotation;
     private CategoryDto category;
-    private Integer confirmedRequests; // Количество одобренных заявок на участие в данном событии
-    private LocalDateTime eventDate; //Дата и время на которые намечено событие
+    private Integer confirmedRequests;
+    private LocalDateTime eventDate;
     private UserShortDto initiator;
-    private Boolean paid; //Нужно ли оплачивать участие
+    private Boolean paid;
     private String title;
-    private Long views; // Количество просмотрев события
+    private Long views;
 }

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "event")
+@ToString
 @Getter
 @Setter
 @Builder
@@ -39,7 +40,7 @@ public class Event {
     private User initiator;
     @ToString.Exclude
     @OneToOne
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "location_id")
     private Location location;
     private Boolean paid;
     @Column(name = "participant_limit")
@@ -52,7 +53,5 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private EventState eventState;
     private String title;
-    @ToString.Exclude
-    @Transient
     private Long views;
 }

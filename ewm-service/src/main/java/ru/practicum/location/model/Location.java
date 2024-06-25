@@ -2,21 +2,21 @@ package ru.practicum.location.model;
 
 import lombok.*;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
+import javax.persistence.*;
 
+@Entity
+@Table(name = "location")
+@ToString
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@EqualsAndHashCode
 public class Location {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "location_id")
     private Long id;
-    @NotNull
-    @Positive
     private Float lat;
-    @NotNull
-    @Positive
     private Float lon;
 }

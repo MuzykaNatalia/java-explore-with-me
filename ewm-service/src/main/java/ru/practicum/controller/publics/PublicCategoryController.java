@@ -12,8 +12,8 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/categories")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PublicCategoryController {

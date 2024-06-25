@@ -15,9 +15,8 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @RestController
-@RequiredArgsConstructor
-@RestControllerAdvice
 @RequestMapping("/admin/compilations")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class AdminCompilationsController {

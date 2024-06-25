@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,14 +29,13 @@ public class NewEventDto {
     private String description;
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDate; // Дата и время на которые намечено событие.
+    private LocalDateTime eventDate;
     @NotNull
     private Location location;
-    private Boolean paid; // Нужно ли оплачивать участие в событии
+    private Boolean paid;
     @Min(0)
-    private Integer participantLimit; // Ограничение на количество участников.Значение 0 - означает отсутствие ограничения
-    private Boolean requestModeration; //Нужна ли пре-модерация заявок на участие. Если true, то все заявки будут ожидать подтверждения инициатором события.
-    // Если false - то будут подтверждаться автоматически.
+    private Integer participantLimit;
+    private Boolean requestModeration;
     @NotBlank
     @Length(min = 3, max = 120)
     private String title;

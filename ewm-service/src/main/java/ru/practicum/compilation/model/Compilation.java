@@ -4,7 +4,7 @@ import lombok.*;
 import ru.practicum.event.model.Event;
 
 import javax.persistence.*;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Table(name = "compilation")
@@ -14,13 +14,18 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Compilation {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "compilation_id")
+    private Long id;
     @ToString.Exclude
     @ManyToMany
-    @JoinColumn(name = "event_id")
-    @Column(name = "event_id")
-    private Set<Event> events;
-    @Column(name = "compilation_id")
-    private Long compilationId;
+    @JoinTable(
+            name = "event_compilation",
+            joinColumns = @JoinColumn(name = "compilation_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id")
+    )
+    private List<Event> events;
     private Boolean pinned;
     private String title;
 }

@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.user.dto.NewUserRequest;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.exceptions.NotFoundException;
@@ -23,10 +23,11 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @Transactional(readOnly = true)
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         Pageable pageable = getPageable(from, size);
-        if (!ids.isEmpty()) {
+        if (ids != null && !ids.isEmpty()) {
             List<User> usersByIds = userRepository.findByIds(ids, pageable);
             log.info("Received users by id={}", ids);
             return userMapper.toUserDtoList(usersByIds);
@@ -36,6 +37,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserDtoList(allUsers);
     }
 
+    @Transactional
     @Override
     public UserDto createUser(NewUserRequest newUserRequest) {
         User createdUser = userRepository.save(userMapper.toUser(newUserRequest));
@@ -43,6 +45,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserDto(createdUser);
     }
 
+    @Transactional
     @Override
     public void deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) {
@@ -55,6 +58,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private Pageable getPageable(Integer from, Integer size) {
-        return PageRequest.of(from / size, size, Sort.by(Sort.Order.asc("id")));
+        return PageRequest.of(from / size, size);
     }
 }

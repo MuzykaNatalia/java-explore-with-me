@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.mapper.CategoryMapper;
 import ru.practicum.category.dto.CategoryDto;
 import ru.practicum.category.dto.NewCategoryDto;
@@ -26,13 +27,16 @@ public class CategoryServiceImpl implements CategoryService {
     private final EventRepository eventRepository;
     private final CategoryMapper categoryMapper;
 
+    @Transactional
     @Override
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
-        Category createdCategory = categoryRepository.save(categoryMapper.toCategoryFromNewCategoryDto(newCategoryDto));
+        Category newCategory = categoryMapper.toCategoryFromNewCategoryDto(newCategoryDto);
+        Category createdCategory = categoryRepository.save(newCategory);
         log.info("Category has been created={}", createdCategory);
         return categoryMapper.toCategoryDto(createdCategory);
     }
 
+    @Transactional
     @Override
     public void deleteCategory(Long catId) {
         checkExistsCategory(catId);
@@ -47,6 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.deleteAllById(Collections.singleton(catId));
     }
 
+    @Transactional
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto, Long catId) {
         checkExistsCategory(catId);
@@ -56,6 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryMapper.toCategoryDto(updatedCategory);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         Pageable pageable = getPageable(from, size);
@@ -64,6 +70,7 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryMapper.toCategoryDtoList(allCategories);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public CategoryDto getOneCategoryDto(Long catId) {
         Category category = categoryRepository.findById(catId).orElseThrow(() ->

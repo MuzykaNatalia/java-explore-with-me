@@ -19,21 +19,20 @@ import java.util.List;
 import static ru.practicum.Constant.PATTERN_DATE;
 
 @RestController
-@RequiredArgsConstructor
-@RestControllerAdvice
 @RequestMapping("/admin/events")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class AdminEventsController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventFullDto> getEventsForAdmin(@RequestParam @NotNull List<Long> users,
-                                                @RequestParam @NotNull List<EventState> states,
-                                                @RequestParam @NotNull List<Long> categories,
-                                                @RequestParam @DateTimeFormat(pattern = PATTERN_DATE) @NotNull
+    public List<EventFullDto> getEventsForAdmin(@RequestParam(required = false) List<Long> users,
+                                                @RequestParam(required = false) List<EventState> states,
+                                                @RequestParam(required = false) List<Long> categories,
+                                                @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                                     LocalDateTime rangeStart,
-                                                @RequestParam @DateTimeFormat(pattern = PATTERN_DATE) @NotNull
+                                                @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                                     LocalDateTime rangeEnd,
                                                 @RequestParam(defaultValue = "0", required = false) Integer from,
                                                 @RequestParam(defaultValue = "10", required = false) Integer size) {

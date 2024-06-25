@@ -12,7 +12,6 @@ import ru.practicum.event.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,23 +19,23 @@ import java.util.List;
 import static ru.practicum.Constant.PATTERN_DATE;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/events")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@RequestParam @NotBlank String text,
-                                         @RequestParam @NotNull List<Long> categories,
-                                         @RequestParam @NotNull Boolean paid,
+    public List<EventShortDto> getEvents(@RequestParam(required = false) String text,
+                                         @RequestParam(required = false) List<Long> categories,
+                                         @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                              LocalDateTime rangeStart,
                                          @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                              LocalDateTime rangeEnd,
                                          @RequestParam(defaultValue = "false", required = false) Boolean onlyAvailable,
-                                         @RequestParam @NotNull SortEvent sort,
+                                         @RequestParam(defaultValue = "VIEWS") SortEvent sort,
                                          @RequestParam(defaultValue = "0", required = false) Integer from,
                                          @RequestParam(defaultValue = "10", required = false) Integer size,
                                          HttpServletRequest request) {

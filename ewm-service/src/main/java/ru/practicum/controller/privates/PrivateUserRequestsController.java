@@ -13,8 +13,8 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/users/{userId}/requests")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PrivateUserRequestsController {
@@ -28,16 +28,16 @@ public class PrivateUserRequestsController {
         return participateRequestService.getInfoOnRequestsForUserInOtherEvents(userId);
     }
 
-    @PostMapping("/{eventId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto createRequestToParticipateInEvent(@PathVariable @NotNull @Min(1L) Long userId,
-                                                                     @PathVariable @NotNull @Min(1L) Long eventId) {
-        log.info("POST /users/{userId}/requests/{eventId}: request create request to participate in " +
+                                                                     @RequestParam(required = false) Long eventId) {
+        log.info("POST /users/{userId}/requests: request create request to participate in " +
                 "event id={} for user id={} ", eventId, userId);
         return participateRequestService.createRequestToParticipateInEvent(userId, eventId);
     }
 
-    @PatchMapping("/{requestId}/cancel: ")
+    @PatchMapping("/{requestId}/cancel")
     public ParticipationRequestDto cancelRequestToParticipateInEvent(@PathVariable @NotNull @Min(1L) Long userId,
                                                                      @PathVariable @NotNull @Min(1L) Long requestId) {
         log.info("PATCH /users/{userId}/requests/{requestId}/cancel: request cancel request id={} to participate " +

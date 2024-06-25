@@ -9,10 +9,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ru.practicum.exceptions.model.ApiError;
 
+import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +38,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<ApiError> handleConflictException(ConflictException e) {
+    public ResponseEntity<ApiError> handleConflictException(final ConflictException e) {
         ApiError apiError = new ApiError()
                 .setStatus(HttpStatus.CONFLICT)
                 .setReason(REASON_CONFLICT)
@@ -46,7 +49,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<ApiError> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+    public ResponseEntity<ApiError> handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
         String errorMessage = e.getMostSpecificCause().getMessage();
         log.warn("The category has not been created due to data integrity violation: {}", errorMessage);
         ApiError apiError = new ApiError()
@@ -57,10 +60,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiError, new HttpHeaders(), apiError.getStatus());
     }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiError> handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        List<String> errors = e.getBindingResult()
+     @Override
+     public ResponseEntity<Object> handleMethodArgumentNotValid(@NotNull MethodArgumentNotValidException ex,
+                                                                @NotNull HttpHeaders headers,
+                                                                @NotNull HttpStatus status, WebRequest request) {
+        List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
@@ -69,7 +73,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError()
                 .setStatus(HttpStatus.BAD_REQUEST)
                 .setReason(REASON_BAD_REQUEST)
-                .setMessage(e.getMessage())
+                .setMessage(ex.getMessage())
                 .setErrors(errors);
 
         return new ResponseEntity<>(apiError, new HttpHeaders(), apiError.getStatus());
@@ -77,10 +81,20 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiError> handleConstraintViolationException(final ConstraintViolationException e) {
-        List<String> errors = e.getConstraintViolations()
-                .stream()
-                .map(violation -> violation.getPropertyPath().toString() + ": " + violation.getMessage())
+    public ResponseEntity<ApiError> handleValidationException(final ValidationException e) {
+        ApiError apiError = new ApiError()
+                .setStatus(HttpStatus.BAD_REQUEST)
+                .setReason(REASON_BAD_REQUEST)
+                .setMessage(e.getMessage())
+                .setErrors(e.getErrorMessages());
+        return new ResponseEntity<>(apiError, new HttpHeaders(), apiError.getStatus());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ApiError> handleConstraintViolationException(ConstraintViolationException e) {
+        List<String> errors = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessageTemplate)
                 .collect(Collectors.toList());
 
         ApiError apiError = new ApiError()

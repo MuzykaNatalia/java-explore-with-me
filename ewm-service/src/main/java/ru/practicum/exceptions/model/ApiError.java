@@ -11,6 +11,8 @@ import static ru.practicum.Constant.FORMATTER;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Accessors(chain = true)
 public class ApiError {
     public HttpStatus status;

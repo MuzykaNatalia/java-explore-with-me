@@ -1,7 +1,7 @@
 package ru.practicum.participate.model;
 
 import lombok.*;
-import ru.practicum.event.status.Status;
+import ru.practicum.status.Status;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;

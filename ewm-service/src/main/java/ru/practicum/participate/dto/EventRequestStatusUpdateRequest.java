@@ -1,19 +1,21 @@
 package ru.practicum.participate.dto;
 
 import lombok.*;
-import ru.practicum.event.status.Status;
+import ru.practicum.status.Status;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 @AllArgsConstructor
-public class EventRequestStatusUpdateRequest { // Изменение статуса запроса на участие в событии текущего пользователя
+@Builder
+@EqualsAndHashCode
+public class EventRequestStatusUpdateRequest {
     @NotNull
-    private List<Long> requestIds; // Идентификаторы запросов на участие в событии текущего пользователя
+    private List<Long> requestIds;
     @NotNull
-    private Status status; // Новый статус запроса на участие в событии текущего пользователя
+    private Status status;
 }

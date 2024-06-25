@@ -7,13 +7,14 @@ import java.util.List;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class CompilationDto { // Подборка событий
+public class CompilationDto {
     private Long id;
-    private List<EventShortDto> events; // Список событий входящих в подборку
-    private Boolean pinned; // Закреплена ли подборка на главной странице сайта
-    private String title; // Заголовок подборки
+    private List<EventShortDto> events;
+    private Boolean pinned;
+    private String title;
 }

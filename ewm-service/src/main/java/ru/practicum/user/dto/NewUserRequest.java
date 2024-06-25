@@ -9,16 +9,17 @@ import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
 public class NewUserRequest {
+    @NotBlank
+    @Length(min = 2, max = 250)
+    private String name;
     @NotNull
     @Email
     @Length(min = 6, max = 254)
     private String email;
-    @NotBlank
-    @Length(min = 2, max = 250)
-    private String name;
 }

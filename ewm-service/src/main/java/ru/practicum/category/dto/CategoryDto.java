@@ -7,9 +7,11 @@ import javax.validation.constraints.NotBlank;
 
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@EqualsAndHashCode
 public class CategoryDto {
     private Long id;
     @NotBlank

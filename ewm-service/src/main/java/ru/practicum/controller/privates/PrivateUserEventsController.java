@@ -21,8 +21,8 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/users/{userId}/events")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class PrivateUserEventsController {
@@ -30,7 +30,7 @@ public class PrivateUserEventsController {
     private final ParticipateRequestService participateRequestService;
 
     @GetMapping
-    public List<EventShortDto> getOwnerEvents(@PathVariable @NotNull @Min(1L) Long userId,
+    public List<EventShortDto> getOwnerEvents(@PathVariable @Min(1L) Long userId,
                                               @RequestParam(required = false, defaultValue = "0") Integer from,
                                               @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("GET /users/{userId}/events: request get owner id={} events, from={}, size={}", userId, from, size);
@@ -62,9 +62,9 @@ public class PrivateUserEventsController {
     }
 
     @GetMapping("/{eventId}/requests")
-    public ParticipationRequestDto getRequestForOwnerEvent(@PathVariable @NotNull @Min(1L) Long userId,
+    public List<ParticipationRequestDto> getRequestForOwnerEvent(@PathVariable @NotNull @Min(1L) Long userId,
                                                            @PathVariable @NotNull @Min(1L) Long eventId) {
-        log.info("GET /users/{userId}/events/{eventId}/requests: request get request for owner id={} event id={}",
+        log.info("GET /users/{userId}/events/{eventId}/requests: list request get request for owner id={} event id={}",
                 userId, eventId);
         return participateRequestService.getRequestForOwnerEvent(userId, eventId);
     }

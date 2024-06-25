@@ -15,16 +15,15 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
-@RestControllerAdvice
 @RequestMapping("/admin/users")
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class AdminUsersController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserDto> getUsers(@RequestParam @NotNull List<Long> ids,
+    public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
                                   @RequestParam(defaultValue = "0", required = false) Integer from,
                                   @RequestParam(defaultValue = "10", required = false) Integer size) {
         log.info("GET /admin/users: request get users by ids={}, from={}, size={}", ids, from, size);
