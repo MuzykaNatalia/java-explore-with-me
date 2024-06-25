@@ -12,9 +12,11 @@ import ru.practicum.user.mapper.UserMapper;
 import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ru.practicum.Constant.PATTERN_DATE;
 import static ru.practicum.event.state.EventState.PENDING;
 
 @Component
@@ -24,7 +26,7 @@ public class EventMapper {
     private final CategoryMapper categoryMapper;
     private final LocationMapper locationMapper;
 
-    public Event toEvent(NewEventDto newEventDto, Category category, User initiator, Location location) {
+    public Event toEventForCreate(NewEventDto newEventDto, Category category, User initiator, Location location) {
         return Event.builder()
                 .annotation(newEventDto.getAnnotation())
                 .category(category)
@@ -44,7 +46,7 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEvent(Event oldEvent, UpdateEventUserRequest request, Category categoryNew) {
+    public Event toEventUpdate(Event oldEvent, UpdateEventUserRequest request, Category categoryNew) {
         return Event.builder()
                 .id(oldEvent.getId())
                 .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
@@ -66,7 +68,7 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEvent(Event oldEvent, UpdateEventAdminRequest request, Category categoryNew) {
+    public Event toEventUpdate(Event oldEvent, UpdateEventAdminRequest request, Category categoryNew) {
         return Event.builder()
                 .id(oldEvent.getId())
                 .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
@@ -94,7 +96,7 @@ public class EventMapper {
                 .annotation(event.getAnnotation())
                 .category(categoryMapper.toCategoryDto(event.getCategory()))
                 .confirmedRequests(event.getConfirmedRequests())
-                .eventDate(event.getEventDate())
+                .eventDate(event.getEventDate().format(DateTimeFormatter.ofPattern(PATTERN_DATE)))
                 .initiator(userMapper.toUserShortDto(event.getInitiator()))
                 .paid(event.getPaid())
                 .title(event.getTitle())
@@ -112,9 +114,9 @@ public class EventMapper {
                 .annotation(event.getAnnotation())
                 .category(categoryMapper.toCategoryDto(event.getCategory()))
                 .confirmedRequests(event.getConfirmedRequests())
-                .createdOn(event.getCreatedOn())
+                .createdOn(event.getCreatedOn().format(DateTimeFormatter.ofPattern(PATTERN_DATE)))
                 .description(event.getDescription())
-                .eventDate(event.getEventDate())
+                .eventDate(event.getEventDate().format(DateTimeFormatter.ofPattern(PATTERN_DATE)))
                 .initiator(userMapper.toUserShortDto(event.getInitiator()))
                 .location(locationMapper.toLocationDto(event.getLocation()))
                 .paid(event.getPaid())

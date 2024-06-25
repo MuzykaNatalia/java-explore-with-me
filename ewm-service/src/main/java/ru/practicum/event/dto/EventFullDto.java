@@ -6,8 +6,6 @@ import ru.practicum.category.dto.CategoryDto;
 import ru.practicum.user.dto.UserShortDto;
 import ru.practicum.event.state.EventState;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @ToString
@@ -20,14 +18,14 @@ public class EventFullDto {
     private String annotation;
     private CategoryDto category;
     private Integer confirmedRequests;
-    private LocalDateTime createdOn;
+    private String createdOn;
     private String description;
-    private LocalDateTime eventDate;
+    private String eventDate;
     private UserShortDto initiator;
     private LocationDto location;
     private Boolean paid;
     private Integer participantLimit;
-    private LocalDateTime publishedOn;
+    private String publishedOn;
     private Boolean requestModeration;
     private EventState state;
     private String title;

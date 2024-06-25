@@ -44,7 +44,7 @@ public class CompilationMapper {
                                      List<Event> events) {
         return Compilation.builder()
                 .id(oldCompilation.getId())
-                .events(updateCompilationRequest.getEvents().isEmpty() ? oldCompilation.getEvents() : events)
+                .events(updateCompilationRequest.getEvents() == null ? oldCompilation.getEvents() : events)
                 .pinned(updateCompilationRequest.getPinned() == null
                         ? oldCompilation.getPinned() : updateCompilationRequest.getPinned())
                 .title(updateCompilationRequest.getTitle() == null
