@@ -63,6 +63,7 @@ public class EventMapper {
                 .publishedOn(oldEvent.getPublishedOn())
                 .requestModeration(request.getRequestModeration() != null
                         ? request.getRequestModeration() : oldEvent.getRequestModeration())
+                .eventState(oldEvent.getEventState())
                 .title(request.getTitle() != null ? request.getTitle() : oldEvent.getTitle())
                 .views(oldEvent.getViews())
                 .build();
@@ -85,6 +86,7 @@ public class EventMapper {
                 .publishedOn(oldEvent.getPublishedOn())
                 .requestModeration(request.getRequestModeration() != null
                         ? request.getRequestModeration() : oldEvent.getRequestModeration())
+                .eventState(oldEvent.getEventState())
                 .title(request.getTitle() != null ? request.getTitle() : oldEvent.getTitle())
                 .views(oldEvent.getViews())
                 .build();
@@ -121,6 +123,8 @@ public class EventMapper {
                 .location(locationMapper.toLocationDto(event.getLocation()))
                 .paid(event.getPaid())
                 .participantLimit(event.getParticipantLimit())
+                .publishedOn(event.getPublishedOn() != null ?
+                        event.getPublishedOn().format(DateTimeFormatter.ofPattern(PATTERN_DATE)) : null)
                 .requestModeration(event.getRequestModeration())
                 .state(event.getEventState())
                 .title(event.getTitle())

@@ -97,8 +97,8 @@ public class EventServiceImpl implements EventService {
 
         if (PUBLISH_EVENT.equals(request.getStateAction())) {
             if (event.getEventState().equals(PENDING)) {
-                event.setPublishedOn(LocalDateTime.now());
                 event = eventMapper.toEventUpdate(event, request, category);
+                event.setPublishedOn(LocalDateTime.now());
                 event.setEventState(PUBLISHED);
                 log.info("Administrator published event={} id={} owner id={}",
                         event, eventId, event.getInitiator().getId());
@@ -135,12 +135,14 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getOneEvent(Long eventId, HttpServletRequest request) {
         Event event = getEvent(eventId);
         if (event.getEventState().equals(PUBLISHED)) {
+            sendInfoAboutViewInStats(List.of(eventId), request);
             event = setViews(List.of(event)).get(0);
+            eventRepository.save(event);
         } else {
             log.warn("Event id={} is not PUBLISHED", eventId);
             throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
         }
-        sendInfoAboutViewInStats(List.of(eventId), request);
+
         log.info("Event id={} received user ip={}", event, request.getRemoteAddr());
         return eventMapper.toEventFullDto(event);
     }
@@ -197,29 +199,34 @@ public class EventServiceImpl implements EventService {
                 : getPageableSortDesc(from, size, "views");
 
         List<Event> events = new ArrayList<>();
-        if (isNotNullTextAndCategoriesAndPaid(text, categories, paid)) {
-            events = findEventsByTextCategoriesPaidAvailableForAll(
-                    text, categories, paid, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullTextAndCategories(text, categories)) {
-            events = findEventsByTextCategoriesAvailableForAll(
-                    text, categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullAndCategoriesAndPaid(categories, paid)) {
-            events = findEventsByCategoriesPaidAvailableForAll(
-                    categories, paid, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullTextAndPaid(text, paid)) {
-            events = findEventsByTextPaidAvailableForAll(
-                    text, paid, rangeStart, rangeEnd, pageable, isTime);
-        } else if (text != null && !text.isEmpty()) {
-            events = findEventsByTextAvailableForAll(text, rangeStart, rangeEnd, pageable, isTime);
-        } else if (categories != null && !categories.isEmpty()) {
-            events = findEventsByCategoriesAvailableForAll(
-                    categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (paid != null) {
-            events = findEventsByPaidAvailableForAll(paid, rangeStart, rangeEnd, pageable, isTime);
+        if (sort.equals(EVENT_DATE)) {
+            if (isNotNullTextAndCategoriesAndPaid(text, categories, paid)) {
+                events = findEventsByTextCategoriesPaidAvailableForAll(
+                        text, categories, paid, rangeStart, rangeEnd, pageable, isTime);
+            } else if (isNotNullTextAndCategories(text, categories)) {
+                events = findEventsByTextCategoriesAvailableForAll(
+                        text, categories, rangeStart, rangeEnd, pageable, isTime);
+            } else if (isNotNullAndCategoriesAndPaid(categories, paid)) {
+                events = findEventsByCategoriesPaidAvailableForAll(
+                        categories, paid, rangeStart, rangeEnd, pageable, isTime);
+            } else if (isNotNullTextAndPaid(text, paid)) {
+                events = findEventsByTextPaidAvailableForAll(
+                        text, paid, rangeStart, rangeEnd, pageable, isTime);
+            } else if (text != null && !text.isEmpty()) {
+                events = findEventsByTextAvailableForAll(text, rangeStart, rangeEnd, pageable, isTime);
+            } else if (categories != null && !categories.isEmpty()) {
+                events = findEventsByCategoriesAvailableForAll(
+                        categories, rangeStart, rangeEnd, pageable, isTime);
+            } else if (paid != null) {
+                events = findEventsByPaidAvailableForAll(paid, rangeStart, rangeEnd, pageable, isTime);
+            }
+        } else {
+            events = eventRepository.findAllByEventState(PUBLISHED, pageable);
         }
-
         sendInfoAboutViewInStats(events.stream().map(Event::getId).collect(Collectors.toList()), request);
         events = setViews(events);
+        eventRepository.saveAll(events);
+        log.info("Events issued={}", events);
         return eventMapper.toEventShortDtoList(events);
     }
 
@@ -295,7 +302,7 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toEventFullDtoList(eventList);
     }
 
-    private List<Event> findEventsByTextCategoriesPaidAvailableForAll(String text, List<Long> categories, //TODO
+    private List<Event> findEventsByTextCategoriesPaidAvailableForAll(String text, List<Long> categories,
                                                                       Boolean paid, LocalDateTime rangeStart,
                                                                       LocalDateTime rangeEnd,
                                                                       Pageable pageable, boolean isTime) {
@@ -464,7 +471,7 @@ public class EventServiceImpl implements EventService {
                 .peek(event -> {
                     try {
                         Object response = statsClient.getStats(event.getCreatedOn(), LocalDateTime.now(),
-                                new String[]{"/event/" + event.getId()}, true).getBody();
+                                new String[]{"/events/" + event.getId()}, true).getBody();
                         List<ViewStatsDto> viewStatsDto;
 
                         if (response instanceof List<?>) {
@@ -473,7 +480,8 @@ public class EventServiceImpl implements EventService {
                                     .map(ViewStatsDto.class::cast)
                                     .collect(Collectors.toList());
 
-                            event.setViews(!viewStatsDto.isEmpty() ? viewStatsDto.get(0).getHits() + 1 : 1L);
+                            event.setViews(!viewStatsDto.isEmpty() ? viewStatsDto.get(0).getHits()
+                                    : event.getViews() + 1);
                         }
                     } catch (Exception e) {
                         log.warn("Error getting statistics for an event id={}", event.getId());

@@ -33,8 +33,8 @@ public class StatsClient extends BaseClient {
         return post(API_PREFIX_HIT, body);
     }
 
-    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end,
-                                           @Nullable String[] uris, Boolean unique) {
+    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, @Nullable String[] uris,
+                                           Boolean unique) {
         String startFormatted = FORMATTER.format(start);
         String endFormatted = FORMATTER.format(end);
 

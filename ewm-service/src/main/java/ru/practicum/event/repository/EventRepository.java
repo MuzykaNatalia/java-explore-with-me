@@ -34,6 +34,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Optional<List<Event>> findByInitiatorIdInAndCategoryIdIn(List<Long> users, List<Long> categories, Pageable pageable);
 
+    List<Event> findAllByEventState(EventState state, Pageable pageable);
+
     @Query("SELECT e FROM Event e WHERE e.eventDate > :rangeStart AND e.eventDate < :rangeEnd")
     Optional<List<Event>> findByDateStartAndEnd(LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable);
 

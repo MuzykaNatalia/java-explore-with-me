@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.compilation.dto.CompilationDto;
 import ru.practicum.compilation.dto.NewCompilationDto;
 import ru.practicum.compilation.dto.UpdateCompilationRequest;
@@ -14,7 +15,6 @@ import ru.practicum.compilation.repository.CompilationRepository;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exceptions.NotFoundException;
-import ru.practicum.exceptions.ValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +28,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
 
+    @Transactional
     @Override
     public CompilationDto createCompilations(NewCompilationDto newCompilationDto) {
         List<Event> events = new ArrayList<>();
@@ -35,12 +36,12 @@ public class CompilationServiceImpl implements CompilationService {
             events = eventRepository.findAllById(newCompilationDto.getEvents());
         }
 
-        //getExceptionIfListEventsEmpty(events);
         Compilation created = compilationRepository.save(compilationMapper.toCompilation(newCompilationDto,
                 events.isEmpty() ? null : events));
         return compilationMapper.toCompilationDto(created);
     }
 
+    @Transactional
     @Override
     public CompilationDto updateCompilations(UpdateCompilationRequest updateCompilationRequest, Long compId) {
         Compilation compilation = getCompilation(compId);
@@ -54,18 +55,21 @@ public class CompilationServiceImpl implements CompilationService {
         return compilationMapper.toCompilationDto(updated);
     }
 
+    @Transactional
     @Override
     public void deleteCompilations(Long compId) {
         Compilation compilation = getCompilation(compId);
         compilationRepository.delete(compilation);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public CompilationDto getOneCompilationsEvents(Long compId) {
         Compilation compilation = getCompilation(compId);
         return compilationMapper.toCompilationDto(compilation);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<CompilationDto> getCompilationsEvents(Boolean pinned, Integer from, Integer size) {
         Pageable pageable = getPageableSortByIdAsc(from, size);
@@ -78,12 +82,6 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         return compilationMapper.toCompilationDtoList(compilations);
-    }
-
-    private void getExceptionIfListEventsEmpty(List<Event> events) {
-        if (events == null || events.isEmpty()) {
-            throw new ValidationException("No events by specified id", Collections.singletonList("Invalid id"));
-        }
     }
 
     private Compilation getCompilation(Long compId) {

@@ -35,7 +35,7 @@ public class PublicEventController {
                                          @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                              LocalDateTime rangeEnd,
                                          @RequestParam(defaultValue = "false", required = false) Boolean onlyAvailable,
-                                         @RequestParam(defaultValue = "VIEWS") SortEvent sort,
+                                         @RequestParam(defaultValue = "VIEWS") String sort,
                                          @RequestParam(defaultValue = "0", required = false) Integer from,
                                          @RequestParam(defaultValue = "10", required = false) Integer size,
                                          HttpServletRequest request) {
@@ -43,7 +43,7 @@ public class PublicEventController {
                 "start={} and end={}, by only available={}, by sort={}, from={}, size={}", text, categories, paid,
                 rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
-                sort, from, size, request);
+                SortEvent.valueOf(sort), from, size, request);
     }
 
     @GetMapping("/{id}")
