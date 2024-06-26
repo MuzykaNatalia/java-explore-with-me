@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
-        Pageable pageable = getPageable(from, size);
+        Pageable pageable = PageRequest.of(from / size, size);
         if (ids != null && !ids.isEmpty()) {
             List<User> usersByIds = userRepository.findByIds(ids, pageable);
             log.info("Received users by id={}", ids);
@@ -55,9 +55,5 @@ public class UserServiceImpl implements UserService {
 
         log.info("User by id={} deleted", userId);
         userRepository.deleteById(userId);
-    }
-
-    private Pageable getPageable(Integer from, Integer size) {
-        return PageRequest.of(from / size, size);
     }
 }

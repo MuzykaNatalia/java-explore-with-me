@@ -38,6 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation created = compilationRepository.save(compilationMapper.toCompilation(newCompilationDto,
                 events.isEmpty() ? null : events));
+        log.info("A new compilation of events has been created={}", created);
         return compilationMapper.toCompilationDto(created);
     }
 
@@ -48,10 +49,10 @@ public class CompilationServiceImpl implements CompilationService {
         List<Event> events = new ArrayList<>();
         if (updateCompilationRequest.getEvents() != null) {
             events = eventRepository.findAllById(updateCompilationRequest.getEvents());
-            // getExceptionIfListEventsEmpty(events);
         }
         compilation = compilationMapper.toCompilation(compilation, updateCompilationRequest, events);
         Compilation updated = compilationRepository.save(compilation);
+        log.info("Compilation of events id={} updated={}", compId, updated);
         return compilationMapper.toCompilationDto(updated);
     }
 
@@ -60,19 +61,21 @@ public class CompilationServiceImpl implements CompilationService {
     public void deleteCompilations(Long compId) {
         Compilation compilation = getCompilation(compId);
         compilationRepository.delete(compilation);
+        log.info("Compilation of events id={} deleted", compId);
     }
 
     @Transactional(readOnly = true)
     @Override
     public CompilationDto getOneCompilationsEvents(Long compId) {
         Compilation compilation = getCompilation(compId);
+        log.info("Received a selection of events by id={}", compId);
         return compilationMapper.toCompilationDto(compilation);
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<CompilationDto> getCompilationsEvents(Boolean pinned, Integer from, Integer size) {
-        Pageable pageable = getPageableSortByIdAsc(from, size);
+        Pageable pageable = PageRequest.of(from / size, size);
         List<Compilation> compilations;
         if (pinned != null) {
             compilations = compilationRepository.findAllByPinned(pinned, pageable)
@@ -80,16 +83,12 @@ public class CompilationServiceImpl implements CompilationService {
         } else {
             compilations = compilationRepository.findAll(pageable).getContent();
         }
-
+        log.info("Received a selection of events={}", compilations);
         return compilationMapper.toCompilationDtoList(compilations);
     }
 
     private Compilation getCompilation(Long compId) {
         return compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Compilation not found", Collections.singletonList("Invalid id")));
-    }
-
-    private Pageable getPageableSortByIdAsc(Integer from, Integer size) {
-        return PageRequest.of(from / size, size);
     }
 }

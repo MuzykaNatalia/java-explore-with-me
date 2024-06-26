@@ -57,6 +57,7 @@ public class CategoryServiceImpl implements CategoryService {
         checkExistsCategory(catId);
         categoryDto.setId(catId);
         Category updatedCategory = categoryRepository.save(categoryMapper.toCategoryFromCategoryDto(categoryDto));
+
         log.info("Category updated={}", updatedCategory);
         return categoryMapper.toCategoryDto(updatedCategory);
     }
@@ -64,8 +65,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
-        Pageable pageable = getPageable(from, size);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Order.asc("id")));
         List<Category> allCategories = categoryRepository.findAll(pageable).getContent();
+
         log.info("Received categories");
         return categoryMapper.toCategoryDtoList(allCategories);
     }
@@ -75,7 +77,8 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto getOneCategoryDto(Long catId) {
         Category category = categoryRepository.findById(catId).orElseThrow(() ->
                 new NotFoundException("Category with id=" + catId + " was not found",
-                        Collections.singletonList("Category id does not exist")));;
+                        Collections.singletonList("Category id does not exist")));
+
         log.info("Received category={} by id={}", category, catId);
         return categoryMapper.toCategoryDto(category);
     }
@@ -86,9 +89,5 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException("Category with id=" + catId + " was not found",
                     Collections.singletonList("Category id does not exist"));
         }
-    }
-
-    private Pageable getPageable(Integer from, Integer size) {
-        return PageRequest.of(from / size, size, Sort.by(Sort.Order.asc("id")));
     }
 }

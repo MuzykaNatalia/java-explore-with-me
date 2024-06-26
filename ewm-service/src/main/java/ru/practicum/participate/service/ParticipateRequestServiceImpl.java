@@ -56,6 +56,8 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
+        log.info("Created request to participate in event id={}, requester id={} : {}",
+                eventId, userId, createdParticipateRequest);
         return participationRequestMapper.toParticipationRequestDto(createdParticipateRequest);
     }
 
@@ -64,20 +66,25 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
     public EventRequestStatusUpdateResult updateRequestStatusParticipateOwnerEvent(
             Long userId, Long eventId, EventRequestStatusUpdateRequest eventRequestStatus) {
         Event event = getEvent(eventId);
+        getExceptionIfEventIsNotThisUser(event.getInitiator(), userId);
         getExceptionIfExceededRequestLimit(event.getConfirmedRequests(), event.getParticipantLimit());
 
         boolean isApplicationConfirmationRequired = (event.getParticipantLimit() != 0)
                 || event.getRequestModeration().equals(true);
 
         if (!isApplicationConfirmationRequired) {
+            log.info("Confirmation of applications is not required");
             return new EventRequestStatusUpdateResult(new ArrayList<>(), new ArrayList<>());
         }
 
-
         List<ParticipateRequest> participateRequests = participateRequestRepository
                 .findAllById(eventRequestStatus.getRequestIds());
+        EventRequestStatusUpdateResult updated = setRequestStatusAndSave(event, eventId, participateRequests,
+                eventRequestStatus);
 
-        return setRequestStatusAndSave(event, eventId, participateRequests, eventRequestStatus);
+        log.info("The status of the request to participate in the event id={} has been updated : {}",
+                eventId, updated);
+        return updated;
     }
 
     @Transactional
@@ -91,8 +98,11 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
             event.setConfirmedRequests(event.getConfirmedRequests() - 1);
             eventRepository.save(event);
         }
+
         participateRequest.setStatus(CANCELED);
         ParticipateRequest cancelRequest = participateRequestRepository.save(participateRequest);
+
+        log.info("The request id={} to participate in the event has been canceled : {}", requestId, cancelRequest);
         return participationRequestMapper.toParticipationRequestDto(cancelRequest);
     }
 
@@ -103,6 +113,9 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         getExceptionIfEventIsNotThisUser(event.getInitiator(), userId);
         List<ParticipateRequest> participateRequests = participateRequestRepository
                 .findAllByEvent(eventId).orElse(new ArrayList<>());
+
+        log.info("Requests to participate in the event id={} have been received by the event initiator id={}",
+                eventId, userId);
         return participationRequestMapper.toParticipationRequestDtoList(participateRequests);
     }
 
@@ -111,6 +124,8 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
     public List<ParticipationRequestDto> getInfoOnRequestsForUserInOtherEvents(Long userId) {
         List<ParticipateRequest> participateRequests = participateRequestRepository
                 .findAllByRequester(userId).orElse(new ArrayList<>());
+
+        log.info("Information about user id={} requests in other events was received : {}", userId, participateRequests);
         return participationRequestMapper.toParticipationRequestDtoList(participateRequests);
     }
 
@@ -143,9 +158,9 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
-    private void getExceptionIfEventIsNotThisUser(User user, Long userId) {
-        if (!user.getId().equals(userId)) {
-            throw new ConflictException("Event is not this user",
+    private void getExceptionIfEventIsNotThisUser(User initiator, Long userId) {
+        if (!initiator.getId().equals(userId)) {
+            throw new ConflictException("The user is not the initiator of the event",
                     Collections.singletonList("Incorrect event id or user id"));
         }
     }

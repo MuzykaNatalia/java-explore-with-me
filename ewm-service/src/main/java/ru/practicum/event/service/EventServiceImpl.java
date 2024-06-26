@@ -49,13 +49,15 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto createOwnerEvent(Long userId, NewEventDto newEventDto) {
         getErrorIfTimeBeforeStartsIsLessThen(newEventDto.getEventDate(), 2);
-        User initiator = getUser(userId);
+        User initiator = userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException("User with id=" + userId + " was not found",
+                        Collections.singletonList("User id does not exist")));
         Category category = getCategory(newEventDto.getCategory());
         Location location = locationRepository.save(newEventDto.getLocation());
         Event event = eventMapper.toEventForCreate(newEventDto, category, initiator, location);
 
         Event createdEvent = eventRepository.save(event);
-        log.info("Created event id={} owner id={}", createdEvent.getId(), userId);
+        log.info("Created event id={} owner id={} : {}", createdEvent.getId(), userId, createdEvent);
         return eventMapper.toEventFullDto(createdEvent);
     }
 
@@ -66,18 +68,19 @@ public class EventServiceImpl implements EventService {
         getExceptionIfStateEventPublished(oldEvent.getEventState());
         getErrorIfTimeBeforeStartsIsLessThen(request.getEventDate(), 2);
         getErrorIfTimeBeforeStartsIsLessThen(oldEvent.getEventDate(), 2);
+
         Category category = request.getCategory() != null
                 ? getCategory(request.getCategory()) : oldEvent.getCategory();
 
         if (CANCEL_REVIEW.equals(request.getStateAction())) {
             oldEvent = eventMapper.toEventUpdate(oldEvent, request, category);
             oldEvent.setEventState(CANCELED);
-            log.info("Cancel event={} id={} owner id={}", oldEvent, eventId, userId);
+            log.info("Cancel event id={} owner id={} : {}", eventId, userId, oldEvent);
             return eventMapper.toEventFullDto(eventRepository.save(oldEvent));
         } else if (SEND_TO_REVIEW.equals(request.getStateAction())) {
             oldEvent = eventMapper.toEventUpdate(oldEvent, request, category);
             oldEvent.setEventState(PENDING);
-            log.info("Update event={} id={} owner id={}", oldEvent, eventId, userId);
+            log.info("Update event id={} owner id={} : {}", eventId, userId, oldEvent);
         }
 
         return eventMapper.toEventFullDto(eventRepository.save(oldEvent));
@@ -92,6 +95,7 @@ public class EventServiceImpl implements EventService {
         Location location = request.getLocation() != null
                 ? locationRepository.save(request.getLocation()) : event.getLocation();
         request.setLocation(location);
+
         getErrorIfTimeBeforeStartsIsLessThen(request.getEventDate(), 1);
         getErrorIfTimeBeforeStartsIsLessThen(event.getEventDate(), 1);
 
@@ -100,8 +104,8 @@ public class EventServiceImpl implements EventService {
                 event = eventMapper.toEventUpdate(event, request, category);
                 event.setPublishedOn(LocalDateTime.now());
                 event.setEventState(PUBLISHED);
-                log.info("Administrator published event={} id={} owner id={}",
-                        event, eventId, event.getInitiator().getId());
+                log.info("Administrator published event id={} owner id={} : {}",
+                        eventId, event.getInitiator().getId(), event);
             } else {
                     log.warn("Event id={} is not PENDING", eventId);
                     throw new ConflictException("Event is not PENDING", Collections.singletonList("An event can " +
@@ -111,8 +115,8 @@ public class EventServiceImpl implements EventService {
             if (!event.getEventState().equals(PUBLISHED)) {
                 event = eventMapper.toEventUpdate(event, request, category);
                 event.setEventState(CANCELED);
-                log.info("Administrator canceled event={} id={} owner id={}",
-                        event, eventId, event.getInitiator().getId());
+                log.info("Administrator canceled event id={} owner id={} : {}",
+                        eventId, event.getInitiator().getId(), event);
             } else {
                     log.warn("Event id={} is not PENDING or CANCELED", eventId);
                     throw new ConflictException("Cannot canceled the event because it's not in the right state: " +
@@ -126,7 +130,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getOwnerOneEvent(Long userId, Long eventId) {
         Event event = getExceptionIfThisNotOwnerOfEvent(eventId, userId);
-        log.info("Event id={} received by owner id={}", eventId, userId);
+        log.info("Event id={} received by owner id={} : {}", eventId, userId, event);
         return eventMapper.toEventFullDto(event);
     }
 
@@ -143,7 +147,7 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
         }
 
-        log.info("Event id={} received user ip={}", event, request.getRemoteAddr());
+        log.info("Event id={} received user ip={} : {}", event, request.getRemoteAddr(), event);
         return eventMapper.toEventFullDto(event);
     }
 
@@ -152,7 +156,7 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getOwnerEvents(Long userId, Integer from, Integer size) {
         Pageable pageable = getPageableSortByAsc(from, size);
         List<Event> eventList = eventRepository.findByInitiatorId(userId, pageable).orElse(new ArrayList<>());
-        log.info("Events issued to the owner id={}", userId);
+        log.info("Events issued to the owner id={} : {}", userId, eventList);
         return eventMapper.toEventShortDtoList(eventList);
     }
 
@@ -184,6 +188,7 @@ public class EventServiceImpl implements EventService {
             return eventMapper.toEventFullDtoList(eventRepository.findByDateStartAndEnd(rangeStart, rangeEnd, pageable)
                     .orElse(new ArrayList<>()));
         }
+        log.info("Information on events for the administrator has been received");
         return eventMapper.toEventFullDtoList(eventRepository.findAll(pageable).getContent());
     }
 
@@ -226,7 +231,7 @@ public class EventServiceImpl implements EventService {
         sendInfoAboutViewInStats(events.stream().map(Event::getId).collect(Collectors.toList()), request);
         events = setViews(events);
         eventRepository.saveAll(events);
-        log.info("Events issued={}", events);
+        log.info("Information on events for the user ip={} has been received : {}", request.getRemoteAddr(), events);
         return eventMapper.toEventShortDtoList(events);
     }
 
@@ -431,12 +436,6 @@ public class EventServiceImpl implements EventService {
         return categoryRepository.findById(catId).orElseThrow(() ->
                 new NotFoundException("Category with id=" + catId + " was not found",
                         Collections.singletonList("Category id does not exist")));
-    }
-
-    private User getUser(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("User with id=" + userId + " was not found",
-                        Collections.singletonList("User id does not exist")));
     }
 
     private Event getEvent(Long eventId) {
