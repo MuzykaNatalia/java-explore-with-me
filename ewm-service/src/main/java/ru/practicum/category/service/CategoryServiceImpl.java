@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.mapper.CategoryMapper;
@@ -32,6 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
         Category newCategory = categoryMapper.toCategoryFromNewCategoryDto(newCategoryDto);
         Category createdCategory = categoryRepository.save(newCategory);
+
         log.info("Category has been created={}", createdCategory);
         return categoryMapper.toCategoryDto(createdCategory);
     }
@@ -40,15 +40,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Long catId) {
         checkExistsCategory(catId);
+        getExceptionIfEventsAssociateWithCategory(catId);
 
-        if (eventRepository.existsByCategory_Id(catId)) {
-            log.warn("The category id={} is not empty", catId);
-            throw new ConflictException("The category is not empty",
-                    Collections.singletonList("No events should be associated with the category"));
-        }
-
+        categoryRepository.deleteById(catId);
         log.info("Category with id={} deleted", catId);
-        categoryRepository.deleteAllById(Collections.singleton(catId));
     }
 
     @Transactional
@@ -65,19 +60,17 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Order.asc("id")));
+        Pageable pageable = PageRequest.of(from / size, size);
         List<Category> allCategories = categoryRepository.findAll(pageable).getContent();
 
-        log.info("Received categories");
+        log.info("Received categories, size={}", allCategories.size());
         return categoryMapper.toCategoryDtoList(allCategories);
     }
 
     @Transactional(readOnly = true)
     @Override
     public CategoryDto getOneCategoryDto(Long catId) {
-        Category category = categoryRepository.findById(catId).orElseThrow(() ->
-                new NotFoundException("Category with id=" + catId + " was not found",
-                        Collections.singletonList("Category id does not exist")));
+        Category category = getCategory(catId);
 
         log.info("Received category={} by id={}", category, catId);
         return categoryMapper.toCategoryDto(category);
@@ -89,5 +82,19 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException("Category with id=" + catId + " was not found",
                     Collections.singletonList("Category id does not exist"));
         }
+    }
+
+    private void getExceptionIfEventsAssociateWithCategory(Long catId) {
+        if (eventRepository.existsByCategory_Id(catId)) {
+            log.warn("The category id={} is not empty", catId);
+            throw new ConflictException("The category is not empty",
+                    Collections.singletonList("No events should be associated with the category"));
+        }
+    }
+
+    private Category getCategory(Long catId) {
+        return categoryRepository.findById(catId).orElseThrow(() ->
+                new NotFoundException("Category with id=" + catId + " was not found",
+                        Collections.singletonList("Category id does not exist")));
     }
 }

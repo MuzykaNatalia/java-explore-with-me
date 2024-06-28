@@ -1,4 +1,4 @@
-package ru.practicum.controller.admin;
+package ru.practicum.controller.compilation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class AdminCompilationsController {
+public class AdminCompilationController {
     private final CompilationService compilationService;
 
     @PostMapping

@@ -28,12 +28,13 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         Pageable pageable = PageRequest.of(from / size, size);
         if (ids != null && !ids.isEmpty()) {
-            List<User> usersByIds = userRepository.findByIds(ids, pageable);
+            List<User> usersByIds = userRepository.findAllByIdIn(ids, pageable);
             log.info("Received users by id={}", ids);
             return userMapper.toUserDtoList(usersByIds);
         }
+
         List<User> allUsers = userRepository.findAll(pageable).getContent();
-        log.info("Received users");
+        log.info("Received users, size={}", allUsers.size());
         return userMapper.toUserDtoList(allUsers);
     }
 
@@ -48,12 +49,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteUser(Long userId) {
+        getExceptionIfUserNotFound(userId);
+
+        userRepository.deleteById(userId);
+        log.info("User by id={} deleted", userId);
+    }
+
+    private void getExceptionIfUserNotFound(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " was not found",
                     Collections.singletonList("User id does not exist"));
         }
-
-        log.info("User by id={} deleted", userId);
-        userRepository.deleteById(userId);
     }
 }

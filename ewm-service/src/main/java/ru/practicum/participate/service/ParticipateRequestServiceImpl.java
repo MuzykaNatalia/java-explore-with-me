@@ -125,7 +125,8 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         List<ParticipateRequest> participateRequests = participateRequestRepository
                 .findAllByRequester(userId).orElse(new ArrayList<>());
 
-        log.info("Information about user id={} requests in other events was received : {}", userId, participateRequests);
+        log.info("Information about user id={} requests in other events was received, size={}",
+                userId, participateRequests.size());
         return participationRequestMapper.toParticipationRequestDtoList(participateRequests);
     }
 
@@ -158,6 +159,13 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
+    private ParticipateRequest getNewParticipateRequest(Long userId, Long eventId,
+                                                        Integer participantLimit, Boolean requestModeration) {
+        return new ParticipateRequest(null, LocalDateTime.now(), eventId, userId,
+                participantLimit == 0 ? CONFIRMED :
+                        requestModeration.equals(true) ? PENDING : CONFIRMED);
+    }
+
     private void getExceptionIfEventIsNotThisUser(User initiator, Long userId) {
         if (!initiator.getId().equals(userId)) {
             throw new ConflictException("The user is not the initiator of the event",
@@ -170,13 +178,6 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
             throw new ConflictException("Request is not this user",
                     Collections.singletonList("Incorrect request or user id"));
         }
-    }
-
-    private ParticipateRequest getNewParticipateRequest(Long userId, Long eventId,
-                                                        Integer participantLimit, Boolean requestModeration) {
-        return new ParticipateRequest(null, LocalDateTime.now(), eventId, userId,
-                participantLimit == 0 ? CONFIRMED :
-                requestModeration.equals(true) ? PENDING : CONFIRMED);
     }
 
     private void getExceptionIfExceededRequestLimit(Integer confirmedRequests, Integer participantLimit) {

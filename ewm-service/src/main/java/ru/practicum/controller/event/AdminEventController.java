@@ -1,4 +1,4 @@
-package ru.practicum.controller.admin;
+package ru.practicum.controller.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import static ru.practicum.Constant.PATTERN_DATE;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class AdminEventsController {
+public class AdminEventController {
     private final EventService eventService;
 
     @GetMapping

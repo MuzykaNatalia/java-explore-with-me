@@ -1,4 +1,4 @@
-package ru.practicum.controller.admin;
+package ru.practicum.controller.category;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class AdminCategoriesController {
+public class AdminCategoryController {
     private final CategoryService categoryService;
 
     @PostMapping

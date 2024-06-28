@@ -47,11 +47,14 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilations(UpdateCompilationRequest updateCompilationRequest, Long compId) {
         Compilation compilation = getCompilation(compId);
         List<Event> events = new ArrayList<>();
+
         if (updateCompilationRequest.getEvents() != null) {
             events = eventRepository.findAllById(updateCompilationRequest.getEvents());
         }
+
         compilation = compilationMapper.toCompilation(compilation, updateCompilationRequest, events);
         Compilation updated = compilationRepository.save(compilation);
+
         log.info("Compilation of events id={} updated={}", compId, updated);
         return compilationMapper.toCompilationDto(updated);
     }
@@ -77,13 +80,15 @@ public class CompilationServiceImpl implements CompilationService {
     public List<CompilationDto> getCompilationsEvents(Boolean pinned, Integer from, Integer size) {
         Pageable pageable = PageRequest.of(from / size, size);
         List<Compilation> compilations;
+
         if (pinned != null) {
             compilations = compilationRepository.findAllByPinned(pinned, pageable)
                     .orElse(new ArrayList<>());
         } else {
             compilations = compilationRepository.findAll(pageable).getContent();
         }
-        log.info("Received a selection of events={}", compilations);
+
+        log.info("Received a selection of events, size={}", compilations.size());
         return compilationMapper.toCompilationDtoList(compilations);
     }
 

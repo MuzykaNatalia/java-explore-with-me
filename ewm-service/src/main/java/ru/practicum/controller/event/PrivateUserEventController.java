@@ -1,4 +1,4 @@
-package ru.practicum.controller.privates;
+package ru.practicum.controller.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class PrivateUserEventsController {
+public class PrivateUserEventController {
     private final EventService eventService;
     private final ParticipateRequestService participateRequestService;
 

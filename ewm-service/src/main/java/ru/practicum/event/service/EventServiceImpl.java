@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.StatsClient;
 import ru.practicum.ViewStatsDto;
+import ru.practicum.event.repository.CustomSearchEventRepository;
 import ru.practicum.event.sort.SortEvent;
 import ru.practicum.event.dto.*;
 import ru.practicum.exceptions.*;
@@ -29,7 +30,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.practicum.Constant.NAME_SERVICE_APP;
-import static ru.practicum.event.sort.SortEvent.EVENT_DATE;
 import static ru.practicum.event.state.AdminStateAction.*;
 import static ru.practicum.event.state.EventState.*;
 import static ru.practicum.user.state.UserStateAction.*;
@@ -38,6 +38,7 @@ import static ru.practicum.user.state.UserStateAction.*;
 @RequiredArgsConstructor
 @Slf4j
 public class EventServiceImpl implements EventService {
+    private final CustomSearchEventRepository customSearchEventRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
@@ -49,9 +50,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto createOwnerEvent(Long userId, NewEventDto newEventDto) {
         getErrorIfTimeBeforeStartsIsLessThen(newEventDto.getEventDate(), 2);
-        User initiator = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("User with id=" + userId + " was not found",
-                        Collections.singletonList("User id does not exist")));
+
+        User initiator = getUser(userId);
         Category category = getCategory(newEventDto.getCategory());
         Location location = locationRepository.save(newEventDto.getLocation());
         Event event = eventMapper.toEventForCreate(newEventDto, category, initiator, location);
@@ -65,6 +65,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateOwnerEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
         Event oldEvent = getExceptionIfThisNotOwnerOfEvent(eventId, userId);
+
         getExceptionIfStateEventPublished(oldEvent.getEventState());
         getErrorIfTimeBeforeStartsIsLessThen(request.getEventDate(), 2);
         getErrorIfTimeBeforeStartsIsLessThen(oldEvent.getEventDate(), 2);
@@ -107,9 +108,7 @@ public class EventServiceImpl implements EventService {
                 log.info("Administrator published event id={} owner id={} : {}",
                         eventId, event.getInitiator().getId(), event);
             } else {
-                    log.warn("Event id={} is not PENDING", eventId);
-                    throw new ConflictException("Event is not PENDING", Collections.singletonList("An event can " +
-                            "only be published if it is in a publish PENDING state"));
+                    getExceptionIfEventNotPending(eventId);
                 }
         } else if (REJECT_EVENT.equals(request.getStateAction())) {
             if (!event.getEventState().equals(PUBLISHED)) {
@@ -118,9 +117,7 @@ public class EventServiceImpl implements EventService {
                 log.info("Administrator canceled event id={} owner id={} : {}",
                         eventId, event.getInitiator().getId(), event);
             } else {
-                    log.warn("Event id={} is not PENDING or CANCELED", eventId);
-                    throw new ConflictException("Cannot canceled the event because it's not in the right state: " +
-                            "PUBLISHED", Collections.singletonList("The event must be in a state PENDING or CANCELED"));
+                getExceptionIfEventPublished(eventId);
                 }
         }
         return eventMapper.toEventFullDto(eventRepository.save(event));
@@ -138,13 +135,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getOneEvent(Long eventId, HttpServletRequest request) {
         Event event = getEvent(eventId);
+
         if (event.getEventState().equals(PUBLISHED)) {
             sendInfoAboutViewInStats(List.of(eventId), request);
             event = setViews(List.of(event)).get(0);
             eventRepository.save(event);
         } else {
-            log.warn("Event id={} is not PUBLISHED", eventId);
-            throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
+            getExceptionIfEventNotPublished(eventId);
         }
 
         log.info("Event id={} received user ip={} : {}", event, request.getRemoteAddr(), event);
@@ -154,8 +151,8 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     @Override
     public List<EventShortDto> getOwnerEvents(Long userId, Integer from, Integer size) {
-        Pageable pageable = getPageableSortByAsc(from, size);
-        List<Event> eventList = eventRepository.findByInitiatorId(userId, pageable).orElse(new ArrayList<>());
+        Pageable pageable = PageRequest.of(from / size, size);
+        List<Event> eventList = eventRepository.findAllByInitiatorId(userId, pageable).orElse(new ArrayList<>());
         log.info("Events issued to the owner id={} : {}", userId, eventList);
         return eventMapper.toEventShortDtoList(eventList);
     }
@@ -166,30 +163,20 @@ public class EventServiceImpl implements EventService {
                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                 Integer from, Integer size) {
         checkDateTime(rangeStart, rangeEnd);
-        boolean isTime = isNotNullTime(rangeStart, rangeEnd);
-        Pageable pageable = getPageableSortByAsc(from, size);
+        SearchEventCriteriaAdmin newSearchEventCriteriaAdmin = SearchEventCriteriaAdmin.builder()
+                .users(users)
+                .states(states)
+                .categories(categories)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .from(from)
+                .size(size)
+                .build();
 
-        if (isNotNullUsersAndStatesAndCategories(users, states, categories)) {
-            return findEventsByUsersStatesCategoriesForAdmin(
-                    users, states, categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullUsersAndStates(users, states)) {
-            return findEventsByUsersStatesForAdmin(users, states, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullStatesAndCategories(states, categories)) {
-            return findEventsByStatesCategoriesForAdmin(states, categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isNotNullUsersAndCategories(users, categories)) {
-            return findEventsByUsersCategoriesForAdmin(users, categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (users != null && !users.isEmpty()) {
-            return findEventsByUsersForAdmin(users, rangeStart, rangeEnd, pageable, isTime);
-        } else if (states != null && !states.isEmpty()) {
-            return findEventsByStatesForAdmin(states, rangeStart, rangeEnd, pageable, isTime);
-        } else if (categories != null && !categories.isEmpty()) {
-            return findEventsByCategoriesForAdmin(categories, rangeStart, rangeEnd, pageable, isTime);
-        } else if (isTime) {
-            return eventMapper.toEventFullDtoList(eventRepository.findByDateStartAndEnd(rangeStart, rangeEnd, pageable)
-                    .orElse(new ArrayList<>()));
-        }
-        log.info("Information on events for the administrator has been received");
-        return eventMapper.toEventFullDtoList(eventRepository.findAll(pageable).getContent());
+        List<Event> events = customSearchEventRepository.getEventsByCriteriaByAdmin(newSearchEventCriteriaAdmin);
+
+        log.info("Information on events for the administrator has been received, size={}", events.size());
+        return eventMapper.toEventFullDtoList(events);
     }
 
     @Transactional(readOnly = true)
@@ -198,216 +185,48 @@ public class EventServiceImpl implements EventService {
                                          LocalDateTime rangeEnd, Boolean onlyAvailable, SortEvent sort,
                                          Integer from, Integer size, HttpServletRequest request) {
         checkDateTime(rangeStart, rangeEnd);
-        boolean isTime = isNotNullTime(rangeStart, rangeEnd);
-        Pageable pageable = sort.equals(EVENT_DATE) ?
-                getPageableSortDesc(from, size, "eventDate")
-                : getPageableSortDesc(from, size, "views");
+        SearchEventCriteria newSearchEventCriteria = SearchEventCriteria.builder()
+                .text(text)
+                .categories(categories)
+                .paid(paid)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .onlyAvailable(onlyAvailable)
+                .sort(sort)
+                .from(from)
+                .size(size)
+                .build();
 
-        List<Event> events = new ArrayList<>();
-        if (sort.equals(EVENT_DATE)) {
-            if (isNotNullTextAndCategoriesAndPaid(text, categories, paid)) {
-                events = findEventsByTextCategoriesPaidAvailableForAll(
-                        text, categories, paid, rangeStart, rangeEnd, pageable, isTime);
-            } else if (isNotNullTextAndCategories(text, categories)) {
-                events = findEventsByTextCategoriesAvailableForAll(
-                        text, categories, rangeStart, rangeEnd, pageable, isTime);
-            } else if (isNotNullAndCategoriesAndPaid(categories, paid)) {
-                events = findEventsByCategoriesPaidAvailableForAll(
-                        categories, paid, rangeStart, rangeEnd, pageable, isTime);
-            } else if (isNotNullTextAndPaid(text, paid)) {
-                events = findEventsByTextPaidAvailableForAll(
-                        text, paid, rangeStart, rangeEnd, pageable, isTime);
-            } else if (text != null && !text.isEmpty()) {
-                events = findEventsByTextAvailableForAll(text, rangeStart, rangeEnd, pageable, isTime);
-            } else if (categories != null && !categories.isEmpty()) {
-                events = findEventsByCategoriesAvailableForAll(
-                        categories, rangeStart, rangeEnd, pageable, isTime);
-            } else if (paid != null) {
-                events = findEventsByPaidAvailableForAll(paid, rangeStart, rangeEnd, pageable, isTime);
-            }
-        } else {
-            events = eventRepository.findAllByEventState(PUBLISHED, pageable);
-        }
+        List<Event> events = customSearchEventRepository.getEventsByCriteriaByAll(newSearchEventCriteria);
         sendInfoAboutViewInStats(events.stream().map(Event::getId).collect(Collectors.toList()), request);
+
         events = setViews(events);
         eventRepository.saveAll(events);
-        log.info("Information on events for the user ip={} has been received : {}", request.getRemoteAddr(), events);
+
+        log.info("Information on events size={} for the user ip={} has been received",
+                events.size(), request.getRemoteAddr());
         return eventMapper.toEventShortDtoList(events);
-    }
-
-    private List<EventFullDto> findEventsByUsersStatesCategoriesForAdmin(List<Long> users, List<EventState> states,
-                                                                        List<Long> categories, LocalDateTime rangeStart,
-                                                                        LocalDateTime rangeEnd, Pageable pageable,
-                                                                        boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByUserIdAndStatesAndCategoriesAndDateStartAndEnd(users, states,
-                        categories, rangeStart, rangeEnd, pageable).orElse(new ArrayList<>())
-                : eventRepository.findByInitiatorIdInAndEventStateInAndCategoryIdIn(users, states, categories,
-                pageable).orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByUsersStatesForAdmin(List<Long> users, List<EventState> states,
-                                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                               Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByUserIdAndStatesAndDateStartAndEnd(users, states, rangeStart, rangeEnd,
-                        pageable).orElse(new ArrayList<>())
-                : eventRepository.findByInitiatorIdInAndEventStateIn(users, states, pageable)
-                .orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByStatesCategoriesForAdmin(List<EventState> states, List<Long> categories,
-                                                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                                    Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByStatesAndCategoriesAndDateStartAndEnd(states, categories, rangeStart,
-                        rangeEnd, pageable).orElse(new ArrayList<>())
-                : eventRepository.findByEventStateInAndCategoryIdIn(states, categories, pageable)
-                .orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByUsersCategoriesForAdmin(List<Long> users, List<Long> categories,
-                                                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                                   Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByUserIdAndCategoriesAndDateStartAndEnd(users, categories, rangeStart,
-                        rangeEnd, pageable).orElse(new ArrayList<>())
-                : eventRepository.findByInitiatorIdInAndCategoryIdIn(users, categories, pageable)
-                .orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByUsersForAdmin(List<Long> users, LocalDateTime rangeStart,
-                                                         LocalDateTime rangeEnd, Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByUserIdAndDateStartAndEnd(users, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findAllByInitiatorIdIn(users, pageable).orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByStatesForAdmin(List<EventState> states, LocalDateTime rangeStart,
-                                                          LocalDateTime rangeEnd, Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByStatesAndDateStartAndEnd(states, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findAllByEventStateIn(states, pageable).orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<EventFullDto> findEventsByCategoriesForAdmin(List<Long> categories, LocalDateTime rangeStart,
-                                                              LocalDateTime rangeEnd, Pageable pageable, boolean isTime) {
-        List<Event> eventList = isTime ?
-                eventRepository.findByCategoriesAndDateStartAndEnd(categories, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findAllByCategoryIdIn(categories, pageable).orElse(new ArrayList<>());
-        return eventMapper.toEventFullDtoList(eventList);
-    }
-
-    private List<Event> findEventsByTextCategoriesPaidAvailableForAll(String text, List<Long> categories,
-                                                                      Boolean paid, LocalDateTime rangeStart,
-                                                                      LocalDateTime rangeEnd,
-                                                                      Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByTextAndCategoriesAndTimeAndPaid(text, text, categories, paid, rangeStart,
-                        rangeEnd, pageable).orElse(new ArrayList<>())
-                : eventRepository.findPublishedByTextAndCategoriesAndPaid(text, text, categories, paid,
-                        LocalDateTime.now(), pageable).orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByTextCategoriesAvailableForAll(String text, List<Long> categories,
-                                                                  LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                                  Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByTextAndCategoriesAndTime(text, text, categories, rangeStart, rangeEnd,
-                        pageable).orElse(new ArrayList<>())
-                : eventRepository.findPublishedByTextAndCategories(text, text, categories, LocalDateTime.now(),
-                        pageable).orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByCategoriesPaidAvailableForAll(List<Long> categories, Boolean paid,
-                                                                  LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                                  Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByCategoriesAndPaid(categories, paid, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findPublishedByCategoriesAndPaid(categories, paid, LocalDateTime.now(), pageable)
-                        .orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByTextPaidAvailableForAll(String text, Boolean paid, LocalDateTime rangeStart,
-                                                            LocalDateTime rangeEnd, Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByTextAndTimeAndPaid(text, text, paid, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findPublishedByTextAndPaid(text, text, paid, LocalDateTime.now(), pageable)
-                        .orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByTextAvailableForAll(String text, LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                        Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByText(text, text, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findPublishedByText(text, text, LocalDateTime.now(), pageable)
-                        .orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByCategoriesAvailableForAll(List<Long> categories, LocalDateTime rangeStart,
-                                                              LocalDateTime rangeEnd, Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByCategoriesAndTime(categories, rangeStart, rangeEnd, pageable)
-                        .orElse(new ArrayList<>())
-                : eventRepository.findPublishedByCategories(categories, LocalDateTime.now(), pageable)
-                        .orElse(new ArrayList<>());
-    }
-
-    private List<Event> findEventsByPaidAvailableForAll(Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                        Pageable pageable, boolean isTime) {
-        return isTime ?
-                eventRepository.findPublishedByPaid(paid, rangeStart, rangeEnd, pageable).orElse(new ArrayList<>())
-                : eventRepository.findPublishedByPaid(paid, LocalDateTime.now(), pageable).orElse(new ArrayList<>());
     }
 
     private boolean isNotNullTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
         return rangeStart != null && rangeEnd != null;
     }
 
-    private boolean isNotNullUsersAndStatesAndCategories(List<Long> users, List<EventState> states,
-                                                         List<Long> categories) {
-        return users != null && states != null && categories != null
-                && !users.isEmpty() && !states.isEmpty() && !categories.isEmpty();
+    private void getExceptionIfEventNotPending(Long eventId) {
+        log.warn("Event id={} is not PENDING", eventId);
+        throw new ConflictException("Event is not PENDING", Collections.singletonList("An event can " +
+                "only be published if it is in a publish PENDING state"));
     }
 
-    private boolean isNotNullUsersAndStates(List<Long> users, List<EventState> states) {
-        return users != null && states != null && !users.isEmpty() && !states.isEmpty();
+    private void getExceptionIfEventPublished(Long eventId) {
+        log.warn("Event id={} is not PENDING or CANCELED", eventId);
+        throw new ConflictException("Cannot canceled the event because it's not in the right state: " +
+                "PUBLISHED", Collections.singletonList("The event must be in a state PENDING or CANCELED"));
     }
 
-    private boolean isNotNullStatesAndCategories(List<EventState> states, List<Long> categories) {
-        return states != null && categories != null && !states.isEmpty() && !categories.isEmpty();
-    }
-
-    private boolean isNotNullUsersAndCategories(List<Long> users, List<Long> categories) {
-        return users != null && categories != null && !users.isEmpty() && !categories.isEmpty();
-    }
-
-    private boolean isNotNullTextAndCategoriesAndPaid(String text, List<Long> categories, Boolean paid) {
-        return text != null && categories != null && paid != null && !text.isEmpty() && !categories.isEmpty();
-    }
-
-    private boolean isNotNullTextAndCategories(String text, List<Long> categories) {
-        return text != null && categories != null && !text.isEmpty() && !categories.isEmpty();
-    }
-
-    private boolean isNotNullAndCategoriesAndPaid(List<Long> categories, Boolean paid) {
-        return categories != null && paid != null && !categories.isEmpty();
-    }
-
-    private boolean isNotNullTextAndPaid(String text, Boolean paid) {
-        return text != null && paid != null && !text.isEmpty();
+    private void getExceptionIfEventNotPublished(Long eventId) {
+        log.warn("Event id={} is not PUBLISHED", eventId);
+        throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
     }
 
     private void checkDateTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
@@ -424,12 +243,10 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private Pageable getPageableSortByAsc(Integer from, Integer size) {
-        return PageRequest.of(from / size, size);
-    }
-
-    private Pageable getPageableSortDesc(Integer from, Integer size, String property) {
-        return PageRequest.of(from / size, size, Sort.by(Sort.Order.desc(property)));
+    private User getUser(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException("User with id=" + userId + " was not found",
+                        Collections.singletonList("User id does not exist")));
     }
 
     private Category getCategory(Long catId) {

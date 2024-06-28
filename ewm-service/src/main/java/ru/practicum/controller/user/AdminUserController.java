@@ -1,4 +1,4 @@
-package ru.practicum.controller.admin;
+package ru.practicum.controller.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class AdminUsersController {
+public class AdminUserController {
     private final UserService userService;
 
     @GetMapping
