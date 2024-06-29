@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.practicum.Constant.NAME_SERVICE_APP;
+import static ru.practicum.event.sort.SortEvent.VIEWS;
 import static ru.practicum.event.state.AdminStateAction.*;
 import static ru.practicum.event.state.EventState.*;
 import static ru.practicum.user.state.UserStateAction.*;
@@ -53,7 +54,7 @@ public class EventServiceImpl implements EventService {
 
         User initiator = getUser(userId);
         Category category = getCategory(newEventDto.getCategory());
-        Location location = locationRepository.save(newEventDto.getLocation());
+        Location location = checkAndSaveLocation(newEventDto.getLocation());
         Event event = eventMapper.toEventForCreate(newEventDto, category, initiator, location);
 
         Event createdEvent = eventRepository.save(event);
@@ -70,16 +71,17 @@ public class EventServiceImpl implements EventService {
         getErrorIfTimeBeforeStartsIsLessThen(request.getEventDate(), 2);
         getErrorIfTimeBeforeStartsIsLessThen(oldEvent.getEventDate(), 2);
 
+        Location location = checkAndSaveLocation(request.getLocation());
         Category category = request.getCategory() != null
                 ? getCategory(request.getCategory()) : oldEvent.getCategory();
 
         if (CANCEL_REVIEW.equals(request.getStateAction())) {
-            oldEvent = eventMapper.toEventUpdate(oldEvent, request, category);
+            oldEvent = eventMapper.toEventUpdate(oldEvent, request, category, location);
             oldEvent.setEventState(CANCELED);
             log.info("Cancel event id={} owner id={} : {}", eventId, userId, oldEvent);
             return eventMapper.toEventFullDto(eventRepository.save(oldEvent));
         } else if (SEND_TO_REVIEW.equals(request.getStateAction())) {
-            oldEvent = eventMapper.toEventUpdate(oldEvent, request, category);
+            oldEvent = eventMapper.toEventUpdate(oldEvent, request, category, location);
             oldEvent.setEventState(PENDING);
             log.info("Update event id={} owner id={} : {}", eventId, userId, oldEvent);
         }
@@ -93,8 +95,7 @@ public class EventServiceImpl implements EventService {
         Event event = getEvent(eventId);
         Category category = request.getCategory() != null
                 ? getCategory(request.getCategory()) : event.getCategory();
-        Location location = request.getLocation() != null
-                ? locationRepository.save(request.getLocation()) : event.getLocation();
+        Location location = checkAndSaveLocation(request.getLocation());
         request.setLocation(location);
 
         getErrorIfTimeBeforeStartsIsLessThen(request.getEventDate(), 1);
@@ -102,7 +103,7 @@ public class EventServiceImpl implements EventService {
 
         if (PUBLISH_EVENT.equals(request.getStateAction())) {
             if (event.getEventState().equals(PENDING)) {
-                event = eventMapper.toEventUpdate(event, request, category);
+                event = eventMapper.toEventUpdate(event, request, category, location);
                 event.setPublishedOn(LocalDateTime.now());
                 event.setEventState(PUBLISHED);
                 log.info("Administrator published event id={} owner id={} : {}",
@@ -112,7 +113,7 @@ public class EventServiceImpl implements EventService {
                 }
         } else if (REJECT_EVENT.equals(request.getStateAction())) {
             if (!event.getEventState().equals(PUBLISHED)) {
-                event = eventMapper.toEventUpdate(event, request, category);
+                event = eventMapper.toEventUpdate(event, request, category, location);
                 event.setEventState(CANCELED);
                 log.info("Administrator canceled event id={} owner id={} : {}",
                         eventId, event.getInitiator().getId(), event);
@@ -138,8 +139,7 @@ public class EventServiceImpl implements EventService {
 
         if (event.getEventState().equals(PUBLISHED)) {
             sendInfoAboutViewInStats(List.of(eventId), request);
-            event = setViews(List.of(event)).get(0);
-            eventRepository.save(event);
+            setViewsForOneEvents(event);
         } else {
             getExceptionIfEventNotPublished(eventId);
         }
@@ -200,46 +200,22 @@ public class EventServiceImpl implements EventService {
         List<Event> events = customSearchEventRepository.getEventsByCriteriaByAll(newSearchEventCriteria);
         sendInfoAboutViewInStats(events.stream().map(Event::getId).collect(Collectors.toList()), request);
 
-        events = setViews(events);
-        eventRepository.saveAll(events);
+        events = setViewsForListEvents(events);
+
+        if (VIEWS.equals(sort)) {
+            events = events.stream().sorted(Comparator.comparing(Event::getViews)).collect(Collectors.toList());
+        }
 
         log.info("Information on events size={} for the user ip={} has been received",
                 events.size(), request.getRemoteAddr());
         return eventMapper.toEventShortDtoList(events);
     }
 
-    private boolean isNotNullTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
-        return rangeStart != null && rangeEnd != null;
-    }
-
-    private void getExceptionIfEventNotPending(Long eventId) {
-        log.warn("Event id={} is not PENDING", eventId);
-        throw new ConflictException("Event is not PENDING", Collections.singletonList("An event can " +
-                "only be published if it is in a publish PENDING state"));
-    }
-
-    private void getExceptionIfEventPublished(Long eventId) {
-        log.warn("Event id={} is not PENDING or CANCELED", eventId);
-        throw new ConflictException("Cannot canceled the event because it's not in the right state: " +
-                "PUBLISHED", Collections.singletonList("The event must be in a state PENDING or CANCELED"));
-    }
-
-    private void getExceptionIfEventNotPublished(Long eventId) {
-        log.warn("Event id={} is not PUBLISHED", eventId);
-        throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
-    }
-
-    private void checkDateTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
-        if (isNotNullTime(rangeStart, rangeEnd) && rangeEnd.isBefore(rangeStart)) {
-            throw new ValidationException("The end time cannot be earlier than the start time",
-                    Collections.singletonList("Incorrect end time has been transmitted"));
-        }
-    }
-
-    private void sendInfoAboutViewInStats(List<Long> eventsIds, HttpServletRequest request) {
-        for (Long id : eventsIds) {
-            statsClient.createHit(new EndpointHitDto(NAME_SERVICE_APP, "/events/" + id,
-                    request.getRemoteAddr(), LocalDateTime.now()));
+    private void getErrorIfTimeBeforeStartsIsLessThen(LocalDateTime verifiableTime, Integer minusHours) {
+        if (verifiableTime != null && verifiableTime.isBefore(LocalDateTime.now().minusHours(minusHours))) {
+            throw new ValidationException("Field: eventDate. Error: must contain a date that has not yet occurred. " +
+                    "Value: " + verifiableTime, Collections.singletonList("The date and time on which the event is " +
+                    "scheduled cannot be earlier than " + minusHours + " two hours from the current moment"));
         }
     }
 
@@ -255,10 +231,17 @@ public class EventServiceImpl implements EventService {
                         Collections.singletonList("Category id does not exist")));
     }
 
-    private Event getEvent(Long eventId) {
-        return eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Event with id=" + eventId + " was not found",
-                        Collections.singletonList("Event id does not exist")));
+    private Location checkAndSaveLocation(Location newLocation) {
+        if (newLocation == null) {
+            return null;
+        }
+
+        Location location = locationRepository.findByLatAndLon(newLocation.getLat(), newLocation.getLon())
+                .orElse(null);
+        if (location == null) {
+            return locationRepository.save(newLocation);
+        }
+        return location;
     }
 
     private Event getExceptionIfThisNotOwnerOfEvent(Long eventId, Long userId) {
@@ -274,35 +257,82 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void getErrorIfTimeBeforeStartsIsLessThen(LocalDateTime verifiableTime, Integer minusHours) {
-        if (verifiableTime != null && verifiableTime.isBefore(LocalDateTime.now().minusHours(minusHours))) {
-            throw new ValidationException("Field: eventDate. Error: must contain a date that has not yet occurred. " +
-                    "Value: " + verifiableTime, Collections.singletonList("The date and time on which the event is " +
-                    "scheduled cannot be earlier than " + minusHours + " two hours from the current moment"));
+    private void getExceptionIfEventNotPending(Long eventId) {
+        log.warn("Event id={} is not PENDING", eventId);
+        throw new ConflictException("Event is not PENDING", Collections.singletonList("An event can " +
+                "only be published if it is in a publish PENDING state"));
+    }
+
+    private void getExceptionIfEventPublished(Long eventId) {
+        log.warn("Event id={} is not PENDING or CANCELED", eventId);
+        throw new ConflictException("Cannot canceled the event because it's not in the right state: " +
+                "PUBLISHED", Collections.singletonList("The event must be in a state PENDING or CANCELED"));
+    }
+
+    private void sendInfoAboutViewInStats(List<Long> eventsIds, HttpServletRequest request) {
+        for (Long id : eventsIds) {
+            statsClient.createHit(new EndpointHitDto(NAME_SERVICE_APP, "/events/" + id,
+                    request.getRemoteAddr(), LocalDateTime.now()));
         }
     }
 
-    private List<Event> setViews(List<Event> events) {
-        return events.stream()
-                .peek(event -> {
-                    try {
-                        Object response = statsClient.getStats(event.getCreatedOn(), LocalDateTime.now(),
-                                new String[]{"/events/" + event.getId()}, true).getBody();
-                        List<ViewStatsDto> viewStatsDto;
+    private void setViewsForOneEvents(Event event) {
+        List<String> uri = List.of("/events/" + event.getId());
+        ViewStatsDto viewStatsDto = statsClient.getStats(event.getCreatedOn(), LocalDateTime.now(), uri, true)
+                .get(0);
+        event.setViews(viewStatsDto.getHits());
+    }
 
-                        if (response instanceof List<?>) {
-                            viewStatsDto = ((List<?>) response).stream()
-                                    .filter(ViewStatsDto.class::isInstance)
-                                    .map(ViewStatsDto.class::cast)
-                                    .collect(Collectors.toList());
+    private void getExceptionIfEventNotPublished(Long eventId) {
+        log.warn("Event id={} is not PUBLISHED", eventId);
+        throw new NotFoundException("Event not found", Collections.singletonList("Incorrect id"));
+    }
 
-                            event.setViews(!viewStatsDto.isEmpty() ? viewStatsDto.get(0).getHits()
-                                    : event.getViews() + 1);
-                        }
-                    } catch (Exception e) {
-                        log.warn("Error getting statistics for an event id={}", event.getId());
-                        throw new RuntimeException("Error getting statistics for an event id=" + event.getId());
-                    }
-                }).collect(Collectors.toList());
+    private Event getEvent(Long eventId) {
+        return eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException("Event with id=" + eventId + " was not found",
+                        Collections.singletonList("Event id does not exist")));
+    }
+
+    private void checkDateTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        if (isNotNullTime(rangeStart, rangeEnd) && rangeEnd.isBefore(rangeStart)) {
+            throw new ValidationException("The end time cannot be earlier than the start time",
+                    Collections.singletonList("Incorrect end time has been transmitted"));
+        }
+    }
+
+    private boolean isNotNullTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        return rangeStart != null && rangeEnd != null;
+    }
+
+    private List<Event> setViewsForListEvents(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return events;
+        }
+
+        List<String> uris = events.stream()
+                .map(event -> "/events/" + event.getId())
+                .collect(Collectors.toList());
+
+        LocalDateTime minCreatedOn = events.stream()
+                .map(Event::getCreatedOn)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now());
+
+        List<ViewStatsDto> viewStatsDto = statsClient.getStats(minCreatedOn, LocalDateTime.now(), uris, true);
+
+        Map<Long, Long> eventsViews = new HashMap<>();
+        viewStatsDto.forEach(v -> eventsViews.put(Long.valueOf(v.getUri().replace("/events/", "")),
+                v.getHits() != null ? v.getHits() : 0));
+
+        events = events.stream()
+                .map(event -> {
+                    Long views = eventsViews.getOrDefault(event.getId(), 0L);
+                    event.setViews(views);
+                    return event;
+                })
+                .collect(Collectors.toList());
+
+        return events;
     }
 }

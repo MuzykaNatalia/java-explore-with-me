@@ -46,7 +46,7 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEventUpdate(Event oldEvent, UpdateEventUserRequest request, Category categoryNew) {
+    public Event toEventUpdate(Event oldEvent, UpdateEventUserRequest request, Category categoryNew, Location location) {
         return Event.builder()
                 .id(oldEvent.getId())
                 .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
@@ -56,7 +56,7 @@ public class EventMapper {
                 .description(request.getDescription() != null ? request.getDescription() : oldEvent.getDescription())
                 .eventDate(request.getEventDate() != null ? request.getEventDate() : oldEvent.getEventDate())
                 .initiator(oldEvent.getInitiator())
-                .location(request.getLocation() != null ? request.getLocation() : oldEvent.getLocation())
+                .location(location != null ? location : oldEvent.getLocation())
                 .paid(request.getPaid() != null ? request.getPaid() : oldEvent.getPaid())
                 .participantLimit(request.getParticipantLimit() != null
                         ? request.getParticipantLimit() : oldEvent.getParticipantLimit())
@@ -69,7 +69,7 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEventUpdate(Event oldEvent, UpdateEventAdminRequest request, Category categoryNew) {
+    public Event toEventUpdate(Event oldEvent, UpdateEventAdminRequest request, Category categoryNew, Location location) {
         return Event.builder()
                 .id(oldEvent.getId())
                 .annotation(request.getAnnotation() != null ? request.getAnnotation() : oldEvent.getAnnotation())
@@ -79,7 +79,7 @@ public class EventMapper {
                 .description(request.getDescription() != null ? request.getDescription() : oldEvent.getDescription())
                 .eventDate(request.getEventDate() != null ? request.getEventDate() : oldEvent.getEventDate())
                 .initiator(oldEvent.getInitiator())
-                .location(request.getLocation())
+                .location(location != null ? location : oldEvent.getLocation())
                 .paid(request.getPaid() != null ? request.getPaid() : oldEvent.getPaid())
                 .participantLimit(request.getParticipantLimit() != null
                         ? request.getParticipantLimit() : oldEvent.getParticipantLimit())

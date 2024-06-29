@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static ru.practicum.event.sort.SortEvent.EVENT_DATE;
-import static ru.practicum.event.sort.SortEvent.VIEWS;
 import static ru.practicum.event.state.EventState.PUBLISHED;
 
 @Repository
@@ -83,7 +82,7 @@ public class CustomSearchEventRepository {
             predicates.add(builder.between(root.get("eventDate"), criteria.getRangeStart(), criteria.getRangeEnd()));
         }
 
-        if (criteria.getOnlyAvailable() != null && criteria.getOnlyAvailable().equals(true)) {
+        if (criteria.getOnlyAvailable().equals(true)) {
             List<Predicate> orPredicates = new ArrayList<>();
             orPredicates.add(builder.equal(root.get("participantLimit"), 0));
             orPredicates.add(builder.gt(root.get("participantLimit"), root.get("confirmedRequests")));
@@ -91,10 +90,8 @@ public class CustomSearchEventRepository {
             predicates.add(builder.or(orPredicates.toArray(new Predicate[0])));
         }
 
-        if (criteria.getSort() != null && EVENT_DATE.equals(criteria.getSort())) {
+        if (EVENT_DATE.equals(criteria.getSort())) {
             query.orderBy(builder.desc(root.get("eventDate")));
-        } else if (criteria.getSort() != null && VIEWS.equals(criteria.getSort())) {
-            query.orderBy(builder.desc(root.get("views")));
         }
 
         query.where(predicates.toArray(new Predicate[0]));

@@ -50,10 +50,14 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto, Long catId) {
-        checkExistsCategory(catId);
-        checkNameCategoryForUnique(categoryDto.getName());
+        Category category = getCategory(catId);
+
+        if (!category.getName().equals(categoryDto.getName())) {
+            checkNameCategoryForUnique(categoryDto.getName());
+        }
+
         categoryDto.setId(catId);
-        Category updatedCategory = categoryRepository.save(categoryMapper.toCategoryFromCategoryDto(categoryDto));
+        Category updatedCategory = categoryRepository.saveAndFlush(categoryMapper.toCategoryFromCategoryDto(categoryDto));
 
         log.info("Category updated={}", updatedCategory);
         return categoryMapper.toCategoryDto(updatedCategory);
