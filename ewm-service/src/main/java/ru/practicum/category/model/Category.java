@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "category")
+@ToString
 @Getter
 @Setter
 @Builder

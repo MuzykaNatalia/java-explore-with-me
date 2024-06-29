@@ -1,6 +1,5 @@
 package ru.practicum.exceptions;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 import static ru.practicum.Constant.*;
 
 @RestControllerAdvice
-@Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -51,7 +49,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ApiError> handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
         String errorMessage = e.getMostSpecificCause().getMessage();
-        log.warn("The category has not been created due to data integrity violation: {}", errorMessage);
+
         ApiError apiError = new ApiError()
                 .setStatus(HttpStatus.CONFLICT)
                 .setReason(REASON_CONFLICT)

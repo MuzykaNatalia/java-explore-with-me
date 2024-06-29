@@ -2,6 +2,7 @@ package ru.practicum.category.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto, Long catId) {
         checkExistsCategory(catId);
+        checkNameCategoryForUnique(categoryDto.getName());
         categoryDto.setId(catId);
         Category updatedCategory = categoryRepository.save(categoryMapper.toCategoryFromCategoryDto(categoryDto));
 
@@ -96,5 +98,12 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findById(catId).orElseThrow(() ->
                 new NotFoundException("Category with id=" + catId + " was not found",
                         Collections.singletonList("Category id does not exist")));
+    }
+
+    private void checkNameCategoryForUnique(String name) {
+        Category category = categoryRepository.findByName(name);
+        if (category != null && category.getName().equals(name)) {
+            throw new DataIntegrityViolationException("This name is already taken by another category");
+        }
     }
 }
