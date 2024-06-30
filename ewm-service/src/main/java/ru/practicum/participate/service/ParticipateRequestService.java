@@ -14,7 +14,7 @@ public interface ParticipateRequestService {
 
     ParticipationRequestDto cancelRequestToParticipateInEvent(Long userId, Long requestId);
 
-    List<ParticipationRequestDto> getRequestForOwnerEvent(Long userId, Long eventId);
+    List<ParticipationRequestDto> getRequestsForOwnerEvent(Long userId, Long eventId);
 
     List<ParticipationRequestDto> getInfoOnRequestsForUserInOtherEvents(Long userId);
 }

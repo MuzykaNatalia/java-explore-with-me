@@ -34,11 +34,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CategoryServiceImplTest {
     private final CategoryService categoryService;
     private final EventService eventService;
+    private final UserService userService;
     private NewUserRequest newUserRequest;
     private NewCategoryDto newCategoryDtoOne;
     private NewCategoryDto newCategoryDtoTwo;
     private NewEventDto newEventDto;
-    private final UserService userService;
 
     @BeforeEach
     public void setUp() {

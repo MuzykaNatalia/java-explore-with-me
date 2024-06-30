@@ -10,4 +10,6 @@ public interface ParticipateRequestRepository extends JpaRepository<ParticipateR
     Optional<List<ParticipateRequest>> findAllByRequester(Long userId);
 
     Optional<List<ParticipateRequest>> findAllByEvent(Long eventId);
+
+    Optional<ParticipateRequest> findByRequesterAndEvent(Long userId, Long eventId);
 }

@@ -44,21 +44,24 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         User requester = getUser(userId);
         Event event = getEvent(eventId);
 
+        getExceptionIfRepeatedRequest(userId, eventId);
         getExceptionIfEventNotPublished(event.getEventState());
         getExceptionIfExceededRequestLimit(event.getConfirmedRequests(), event.getParticipantLimit());
         getExceptionIfInitiatorEqualsRequester(event.getInitiator().getId(), requester.getId());
 
         ParticipateRequest participateRequest = getNewParticipateRequest(
                 userId, eventId, event.getParticipantLimit(), event.getRequestModeration());
-        ParticipateRequest createdParticipateRequest = participateRequestRepository.save(participateRequest);
 
-        if (createdParticipateRequest.getStatus().equals(CONFIRMED)) {
+        if (participateRequest.getStatus().equals(CONFIRMED)) {
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
+
+        participateRequestRepository.save(participateRequest);
+
         log.info("Created request to participate in event id={}, requester id={} : {}",
-                eventId, userId, createdParticipateRequest);
-        return participationRequestMapper.toParticipationRequestDto(createdParticipateRequest);
+                eventId, userId, participateRequest);
+        return participationRequestMapper.toParticipationRequestDto(participateRequest);
     }
 
     @Transactional
@@ -69,10 +72,10 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         getExceptionIfEventIsNotThisUser(event.getInitiator(), userId);
         getExceptionIfExceededRequestLimit(event.getConfirmedRequests(), event.getParticipantLimit());
 
-        boolean isApplicationConfirmationRequired = (event.getParticipantLimit() != 0)
-                || event.getRequestModeration().equals(true);
+        boolean isNotApplicationConfirmationRequired = (event.getParticipantLimit() == 0)
+                || event.getRequestModeration().equals(false);
 
-        if (!isApplicationConfirmationRequired) {
+        if (isNotApplicationConfirmationRequired) {
             log.info("Confirmation of applications is not required");
             return new EventRequestStatusUpdateResult(new ArrayList<>(), new ArrayList<>());
         }
@@ -108,7 +111,7 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
 
     @Transactional(readOnly = true)
     @Override
-    public List<ParticipationRequestDto> getRequestForOwnerEvent(Long userId, Long eventId) {
+    public List<ParticipationRequestDto> getRequestsForOwnerEvent(Long userId, Long eventId) {
         Event event = getEvent(eventId);
         getExceptionIfEventIsNotThisUser(event.getInitiator(), userId);
         List<ParticipateRequest> participateRequests = participateRequestRepository
@@ -159,11 +162,10 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
-    private ParticipateRequest getNewParticipateRequest(Long userId, Long eventId,
-                                                        Integer participantLimit, Boolean requestModeration) {
+    private ParticipateRequest getNewParticipateRequest(Long userId, Long eventId, Integer participantLimit,
+                                                        Boolean requestModeration) {
         return new ParticipateRequest(null, LocalDateTime.now(), eventId, userId,
-                participantLimit == 0 ? CONFIRMED :
-                        requestModeration.equals(true) ? PENDING : CONFIRMED);
+                participantLimit == 0 ? CONFIRMED : requestModeration.equals(true) ? PENDING : CONFIRMED);
     }
 
     private void getExceptionIfEventIsNotThisUser(User initiator, Long userId) {
@@ -191,6 +193,13 @@ public class ParticipateRequestServiceImpl implements ParticipateRequestService 
         if (!eventState.equals(PUBLISHED)) {
             throw new ConflictException("You cannot participate in an unpublished event",
                     Collections.singletonList("Event is not PUBLISHED"));
+        }
+    }
+
+    private void getExceptionIfRepeatedRequest(Long userId, Long eventId) {
+        ParticipateRequest request = participateRequestRepository.findByRequesterAndEvent(userId, eventId).orElse(null);
+        if (request != null) {
+            throw new ConflictException("You can't add a repeat request", Collections.singletonList("Repeated request"));
         }
     }
 
