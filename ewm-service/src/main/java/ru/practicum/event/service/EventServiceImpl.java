@@ -33,7 +33,7 @@ import static ru.practicum.Constant.NAME_SERVICE_APP;
 import static ru.practicum.event.sort.SortEvent.VIEWS;
 import static ru.practicum.event.state.AdminStateAction.*;
 import static ru.practicum.event.state.EventState.*;
-import static ru.practicum.user.state.UserStateAction.*;
+import static ru.practicum.event.state.UserStateAction.*;
 
 @Service
 @RequiredArgsConstructor
@@ -127,6 +127,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     @Override
     public EventFullDto getOwnerOneEvent(Long userId, Long eventId) {
+        getUser(userId);
         Event event = getExceptionIfThisNotOwnerOfEvent(eventId, userId);
         log.info("Event id={} received by owner id={} : {}", eventId, userId, event);
         return eventMapper.toEventFullDto(event);
@@ -211,11 +212,11 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toEventShortDtoList(events);
     }
 
-    private void getErrorIfTimeBeforeStartsIsLessThen(LocalDateTime verifiableTime, Integer minusHours) {
-        if (verifiableTime != null && verifiableTime.isBefore(LocalDateTime.now().minusHours(minusHours))) {
+    private void getErrorIfTimeBeforeStartsIsLessThen(LocalDateTime verifiableTime, Integer plusHours) {
+        if (verifiableTime != null && verifiableTime.isBefore(LocalDateTime.now().plusHours(plusHours))) {
             throw new ValidationException("Field: eventDate. Error: must contain a date that has not yet occurred. " +
                     "Value: " + verifiableTime, Collections.singletonList("The date and time on which the event is " +
-                    "scheduled cannot be earlier than " + minusHours + " two hours from the current moment"));
+                    "scheduled cannot be earlier than " + plusHours + " two hours from the current moment"));
         }
     }
 

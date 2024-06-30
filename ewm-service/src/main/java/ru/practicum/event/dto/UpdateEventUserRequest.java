@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
 import ru.practicum.location.model.Location;
-import ru.practicum.user.state.UserStateAction;
+import ru.practicum.event.state.UserStateAction;
 
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
