@@ -16,7 +16,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.Constant.PATTERN_DATE;
+import static ru.practicum.constant.Constant.PATTERN_DATE;
 
 @RestController
 @RequestMapping("/events")
@@ -35,7 +35,7 @@ public class PublicEventController {
                                          @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE)
                                              LocalDateTime rangeEnd,
                                          @RequestParam(defaultValue = "true", required = false) Boolean onlyAvailable,
-                                         @RequestParam(defaultValue = "EVENT_DATE") String sort,
+                                         @RequestParam(defaultValue = "EVENT_DATE") SortEvent sort,
                                          @RequestParam(defaultValue = "0", required = false) Integer from,
                                          @RequestParam(defaultValue = "10", required = false) Integer size,
                                          HttpServletRequest request) {
@@ -43,7 +43,7 @@ public class PublicEventController {
                 "start={} and end={}, by only available={}, by sort={}, from={}, size={}", text, categories, paid,
                 rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
-                SortEvent.valueOf(sort), from, size, request);
+                sort, from, size, request);
     }
 
     @GetMapping("/{id}")

@@ -16,7 +16,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.Constant.PATTERN_DATE;
+import static ru.practicum.constant.Constant.PATTERN_DATE;
 
 @RestController
 @RequestMapping("/admin/events")

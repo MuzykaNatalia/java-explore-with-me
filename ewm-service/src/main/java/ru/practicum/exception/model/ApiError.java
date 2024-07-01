@@ -1,0 +1,23 @@
+package ru.practicum.exception.model;
+
+import lombok.*;
+import lombok.experimental.Accessors;
+import org.springframework.http.HttpStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static ru.practicum.constant.Constant.FORMATTER;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
+public class ApiError {
+    public HttpStatus status;
+    public String reason;
+    public String message;
+    public List<String> errors;
+    public String timestamp = FORMATTER.format(LocalDateTime.now());
+}

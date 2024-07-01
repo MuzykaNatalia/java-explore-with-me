@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.Constant.PATTERN_DATE;
+import static ru.practicum.constant.Constant.PATTERN_DATE;
 import static ru.practicum.event.state.EventState.PENDING;
 
 @Component
