@@ -11,9 +11,8 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats_db
       - SPRING_DATASOURCE_USERNAME=stats
-      - SPRING_DATASOURCE_PASSWORD=aDd1m7in@
+      - SPRING_DATASOURCE_PASSWORD=aDd1m7in7
       - SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - STATS_SERVER_URL=http://localhost:9090
 
   stats-db:
     image: postgres:13.7-alpine
@@ -23,7 +22,7 @@ services:
     environment:
       - POSTGRES_DB=stats_db
       - POSTGRES_USER=stats
-      - POSTGRES_PASSWORD=aDd1m7in@
+      - POSTGRES_PASSWORD=aDd1m7in7
 
   ewm-service:
     build: ./ewm-service
@@ -32,14 +31,14 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - ewm-db
       - stats-server
+      - ewm-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm-db
+      - STATS_SERVER_URL=http://stats-server:9090
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm_db
       - SPRING_DATASOURCE_USERNAME=ewm
-      - SPRING_DATASOURCE_PASSWORD=a@d1m0iPn
+      - SPRING_DATASOURCE_PASSWORD=ald1m0iPn
       - SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - EWM_SERVICE_URL=http://localhost:8080
 
   ewm-db:
     image: postgres:13.7-alpine
@@ -49,4 +48,4 @@ services:
     environment:
       - POSTGRES_DB=ewm_db
       - POSTGRES_USER=ewm
-      - POSTGRES_PASSWORD=a@d1m0iPn
+      - POSTGRES_PASSWORD=ald1m0iPn
