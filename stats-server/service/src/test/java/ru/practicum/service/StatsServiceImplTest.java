@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.ViewStatsDto;
-import ru.practicum.exceptions.EndTimeBeforeStartTimeException;
+import ru.practicum.exception.EndTimeBeforeStartTimeException;
 
 import java.time.LocalDateTime;
 import java.util.List;

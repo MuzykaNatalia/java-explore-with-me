@@ -6,6 +6,7 @@ import lombok.*;
 @Setter
 @EqualsAndHashCode
 @ToString
+@Builder
 @AllArgsConstructor
 public class ViewStats {
     private String app;

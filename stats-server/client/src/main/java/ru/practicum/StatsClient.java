@@ -1,5 +1,6 @@
 package ru.practicum;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -11,16 +12,19 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class StatsClient extends BaseClient {
+    private final ObjectMapper mapper = new ObjectMapper();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String API_PREFIX_HIT = "/hit";
     private static final String API_PREFIX_STATS = "/stats";
 
     @Autowired
-    public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
+    public StatsClient(@Value("${STATS_SERVER_URL}") String serverUrl, RestTemplateBuilder builder) {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
@@ -33,8 +37,8 @@ public class StatsClient extends BaseClient {
         return post(API_PREFIX_HIT, body);
     }
 
-    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end,
-                                           @Nullable String[] uris, Boolean unique) {
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, @Nullable List<String> uris,
+                                           Boolean unique) {
         String startFormatted = FORMATTER.format(start);
         String endFormatted = FORMATTER.format(end);
 
@@ -44,6 +48,13 @@ public class StatsClient extends BaseClient {
                 "end", endFormatted,
                 "uris", uris != null ? String.join(",", uris) : "",
                 "unique", unique);
-        return get(API_PREFIX_STATS + path, parameters);
+
+        Object response = get(API_PREFIX_STATS + path, parameters).getBody();
+
+        try {
+            return Arrays.asList(mapper.readValue(mapper.writeValueAsString(response), ViewStatsDto[].class));
+        } catch (Exception e) {
+            throw new ClassCastException(e.getMessage());
+        }
     }
 }
