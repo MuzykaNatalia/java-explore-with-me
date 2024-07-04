@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f21384fd-e464-4d67-88e5-e46d11a1f67c",
+		"_postman_id": "f03ba64c-d65a-4ae6-ae36-bc3016ad8410",
 		"name": "Comments",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32547807"
@@ -73,12 +73,12 @@
 							"const target = pm.response.json();\r",
 							"\r",
 							"pm.test(\"Комментарий должен содержать поля: id, text, userName, created, updated, replies\", function () {\r",
-							"pm.expect(target).to.have.property('id');\r",
-							"pm.expect(target).to.have.property('text');\r",
-							"pm.expect(target).to.have.property('userName');\r",
-							"pm.expect(target).to.have.property('created');\r",
-							"pm.expect(target).to.have.property('updated');\r",
-							"pm.expect(target).to.have.property('replies');\r",
+							"    pm.expect(target).to.have.property('id');\r",
+							"    pm.expect(target).to.have.property('text');\r",
+							"    pm.expect(target).to.have.property('userName');\r",
+							"    pm.expect(target).to.have.property('created');\r",
+							"    pm.expect(target).to.have.property('updated');\r",
+							"    pm.expect(target).to.have.property('replies');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -108,7 +108,12 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{{request_body}}"
+					"raw": "{{request_body}}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "{{baseUrl}}/comment/{{commentId}}/user/{{userId}}",
@@ -195,12 +200,12 @@
 							"const target = pm.response.json();\r",
 							"\r",
 							"pm.test(\"Комментарий должен содержать поля: id, text, userName, created, updated, replies\", function () {\r",
-							"pm.expect(target).to.have.property('id');\r",
-							"pm.expect(target).to.have.property('text');\r",
-							"pm.expect(target).to.have.property('userName');\r",
-							"pm.expect(target).to.have.property('created');\r",
-							"pm.expect(target).to.have.property('updated');\r",
-							"pm.expect(target).to.have.property('replies');\r",
+							"    pm.expect(target).to.have.property('id');\r",
+							"    pm.expect(target).to.have.property('text');\r",
+							"    pm.expect(target).to.have.property('userName');\r",
+							"    pm.expect(target).to.have.property('created');\r",
+							"    pm.expect(target).to.have.property('updated');\r",
+							"    pm.expect(target).to.have.property('replies');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
