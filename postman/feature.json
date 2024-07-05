@@ -197,7 +197,7 @@
 							"        console.log(\"Создан комментарий:\", comment);\r",
 							"\r",
 							"        const comment1 = await api.updateComment(comment.id, user1.id, rnd.getCommentUpdate(comment.id, null));\r",
-							"        console.log(\"Создан обновлен:\", comment);\r",
+							"        console.log(\"Комментарий обновлен:\", comment1);\r",
 							"        pm.collectionVariables.set(\"commentId\", comment1.id);\r",
 							"        pm.collectionVariables.set('response', comment1);\r",
 							"\r",
@@ -1886,21 +1886,6 @@
 		},
 		{
 			"key": "confirmedRequests",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "responseArr",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "source1",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "source2",
 			"value": "",
 			"type": "string"
 		},
