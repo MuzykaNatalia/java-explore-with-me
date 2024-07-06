@@ -65,7 +65,7 @@ public class CommentMapper {
                 .created(comment.getCreated().format(DateTimeFormatter.ofPattern(PATTERN_DATE)))
                 .updated(comment.getUpdated() != null ?
                         comment.getUpdated().format(DateTimeFormatter.ofPattern(PATTERN_DATE)) : null)
-                .replies(comment.getReplies() != null ? toCommentDtoList(comment.getReplies()) : null)
+                .reply(comment.getReply() != null ? toCommentDto(comment.getReply()) : null)
                 .build();
     }
 

@@ -39,9 +39,9 @@ public class AdminCommentController {
         return commentService.getAllCommentsUserForAdmin(userId, from, size);
     }
 
-    @GetMapping("/{commentId}/user/{userId}")
+    @GetMapping("/{commentId}")
     public CommentFullDto getCommentForAdmin(@PathVariable @NotNull @Positive Long commentId) {
-        log.info("GET /admin/comment/{commentId}/user/{userId}: request to receive one comment id={} from the " +
+        log.info("GET /admin/comment/{commentId}: request to receive one comment id={} from the " +
                         "administrator", commentId);
         return commentService.getCommentForAdmin(commentId);
     }

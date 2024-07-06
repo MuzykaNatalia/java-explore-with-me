@@ -6,7 +6,6 @@ import ru.practicum.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "comment")
@@ -32,10 +31,11 @@ public class Comment {
     private Event event;
     private LocalDateTime created;
     private LocalDateTime updated;
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Comment parentComment;
     @ToString.Exclude
     @Transient
-    public List<Comment> replies;
+    public Comment reply;
 }

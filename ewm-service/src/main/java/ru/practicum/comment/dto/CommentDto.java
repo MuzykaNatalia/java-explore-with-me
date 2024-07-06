@@ -2,8 +2,6 @@ package ru.practicum.comment.dto;
 
 import lombok.*;
 
-import java.util.List;
-
 @Getter
 @Setter
 @ToString
@@ -17,5 +15,5 @@ public class CommentDto {
     private String userName;
     private String created;
     private String updated;
-    private List<CommentDto> replies;
+    private CommentDto reply;
 }

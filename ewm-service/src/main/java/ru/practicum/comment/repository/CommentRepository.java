@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-    Optional<List<Comment>> findAllByParentCommentId(Long commentId, Pageable pageable);
+    Optional<List<Comment>> findAllByParentCommentIdIn(List<Long> commentId);
 
     Optional<Comment> findByIdAndAuthorId(Long commentId, Long userId);
 

@@ -15,13 +15,12 @@ import ru.practicum.comment.model.Comment;
 import ru.practicum.comment.repository.CommentRepository;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.repository.EventRepository;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.practicum.event.state.EventState.PUBLISHED;
@@ -40,6 +39,8 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto createComment(Long eventId, Long userId, NewCommentDto newCommentDto) {
         Event event = getEvent(eventId);
         User user = getUser(userId);
+        getExceptionIfReplyNotEventInitiator(event, userId, newCommentDto);
+
         Comment parentComment = getParentComment(eventId, newCommentDto);
         Comment createComment = commentMapper.toCommentCreate(newCommentDto, event, user, parentComment);
         createComment = commentRepository.save(createComment);
@@ -91,14 +92,12 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentDto> getAllCommentsByEvent(Long eventId, Integer from, Integer size) {
         Pageable pageable = getPageable(from, size);
-        List<Comment> allCommentByEvent = commentRepository.findAllByEventIdAndParentComment(eventId, null, pageable)
+
+        List<Comment> allCommentByEvent = commentRepository
+                .findAllByEventIdAndParentComment(eventId, null, pageable)
                 .orElse(new ArrayList<>());
-        List<Comment> commentsWithReplies = allCommentByEvent.stream()
-                .map(comment -> {
-                    List<Comment> replies = getReplies(comment, pageable);
-                    comment.setReplies(replies);
-                    return comment;
-                }).collect(Collectors.toList());
+
+        List<Comment> commentsWithReplies = setReplies(allCommentByEvent);
 
         log.info("Received all comments event id={}, size={}", eventId, commentsWithReplies.size());
         return commentMapper.toCommentDtoList(commentsWithReplies);
@@ -152,6 +151,13 @@ public class CommentServiceImpl implements CommentService {
                         Collections.singletonList("User id does not exist")));
     }
 
+    private void getExceptionIfReplyNotEventInitiator(Event event, Long userId, NewCommentDto newCommentDto) {
+        if (newCommentDto.getParentComment() != null && !event.getInitiator().getId().equals(userId)) {
+            throw new ConflictException("Only the event organizer can respond to comments",
+                    Collections.singletonList("The user is not the event organizer"));
+        }
+    }
+
     private Comment getCommentByIdAndAuthor(Long commentId, Long userId) {
         return commentRepository.findByIdAndAuthorId(commentId, userId).orElseThrow(() ->
                 new NotFoundException("Comment with id=" + commentId + " was not found",
@@ -171,9 +177,28 @@ public class CommentServiceImpl implements CommentService {
                         Collections.singletonList("Comment is not found")));
     }
 
-    private List<Comment> getReplies(Comment comment, Pageable pageable) {
-        return commentRepository.findAllByParentCommentId(comment.getId(), pageable)
-                .orElse(new ArrayList<>());
+    private List<Comment> setReplies(List<Comment> comments) {
+        List<Long> commentsIds = comments.stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+
+        List<Comment> replies = commentRepository.findAllByParentCommentIdIn(commentsIds).orElse(new ArrayList<>());
+        Map<Long, Comment> repliesMap = getCommentsByIdInMap(replies);
+
+        return comments.stream()
+                .map(comment -> {
+                    if (repliesMap.containsKey(comment.getId())) {
+                        Comment reply = repliesMap.get(comment.getId());
+                        comment.setReply(reply);
+                    }
+                    return comment;
+                }).collect(Collectors.toList());
+    }
+
+    private Map<Long, Comment> getCommentsByIdInMap(List<Comment> replies) {
+        Map<Long, Comment> repliesMap = new HashMap<>();
+        replies.forEach(comment -> repliesMap.put(comment.getParentComment().getId(), comment));
+        return repliesMap;
     }
 
     private Pageable getPageable(Integer from, Integer size) {

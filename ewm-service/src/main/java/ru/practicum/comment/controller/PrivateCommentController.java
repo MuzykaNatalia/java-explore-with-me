@@ -23,31 +23,29 @@ import java.util.List;
 public class PrivateCommentController {
     private final CommentService commentService;
 
-    @PostMapping("/event/{eventId}/user/{userId}")
+    @PostMapping("/event/{eventId}")
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(@PathVariable @NotNull @Positive Long eventId,
-                                    @PathVariable @NotNull @Positive Long userId,
+                                    @RequestParam @NotNull @Positive Long userId,
                                     @Valid @RequestBody NewCommentDto newCommentDto) {
-        log.info("POST /comment/event/{eventId}/user/{userId}: request to create a comment for event id={} by user id={}",
+        log.info("POST /comment/event/{eventId}: request to create a comment for event id={} by user id={}",
                 eventId, userId);
         return commentService.createComment(eventId, userId, newCommentDto);
     }
 
-    @PatchMapping("/{commentId}/user/{userId}")
+    @PatchMapping("/{commentId}")
     public CommentDto updateComment(@PathVariable @NotNull @Positive Long commentId,
-                                    @PathVariable @NotNull @Positive Long userId,
+                                    @RequestParam @NotNull @Positive Long userId,
                                     @Valid @RequestBody UpdateCommentDto updateCommentDto) {
-        log.info("PATCH /comment/{commentId}/user/{userId}: request to update a comment id={} by user id={}",
-                commentId, userId);
+        log.info("PATCH /comment/{commentId}: request to update a comment id={} by user id={}", commentId, userId);
         return commentService.updateComment(commentId, userId, updateCommentDto);
     }
 
-    @DeleteMapping("/{commentId}/user/{userId}")
+    @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable @NotNull @Positive Long commentId,
-                              @PathVariable @NotNull @Positive Long userId) {
-        log.info("DELETE /comment/{commentId}/user/{userId}: request to delete a comment id={} by user id={}",
-                commentId, userId);
+                              @RequestParam @NotNull @Positive Long userId) {
+        log.info("DELETE /comment/{commentId}: request to delete a comment id={} by user id={}", commentId, userId);
         commentService.deleteComment(commentId, userId);
     }
 
@@ -60,11 +58,10 @@ public class PrivateCommentController {
         return commentService.getAllCommentsUser(userId, from, size);
     }
 
-    @GetMapping("/{commentId}/user/{userId}")
+    @GetMapping("/{commentId}")
     public CommentDto getComment(@PathVariable @NotNull @Positive Long commentId,
-                                 @PathVariable @NotNull @Positive Long userId) {
-        log.info("GET /comment/{commentId}/user/{userId}: request to get one comment id={} by user id={}",
-                commentId, userId);
+                                 @RequestParam @NotNull @Positive Long userId) {
+        log.info("GET /comment/{commentId}: request to get one comment id={} by user id={}", commentId, userId);
         return commentService.getCommentUser(commentId, userId);
     }
 }

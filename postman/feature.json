@@ -24,8 +24,8 @@
 							"        console.log(\"Создан пользователь-владелец:\", owner);\r",
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
-							"        console.log(\"Создан пользователь:\", user1);\r",
 							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
+							"        console.log(\"Создан пользователь:\", user1);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -94,7 +94,7 @@
 							"    pm.expect(target).to.have.property('userName');\r",
 							"    pm.expect(target).to.have.property('created');\r",
 							"    pm.expect(target).to.have.property('updated');\r",
-							"    pm.expect(target).to.have.property('replies');\r",
+							"    pm.expect(target).to.have.property('reply');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -103,7 +103,7 @@
 							"    pm.expect(source.userName).equal(target.userName);\r",
 							"    pm.expect(source.created).equal(target.created);\r",
 							"    pm.expect(source.updated).equal(target.updated);\r",
-							"    pm.expect(target).to.have.property('replies').that.is.null;\r",
+							"    pm.expect(target).to.have.property('reply').that.is.null;\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -132,24 +132,24 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/comment/:commentId/user/:userId",
+					"raw": "{{baseUrl}}/comment/:commentId?userId={{userId}}",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"comment",
-						":commentId",
-						"user",
-						":userId"
+						":commentId"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "{{userId}}"
+						}
 					],
 					"variable": [
 						{
 							"key": "commentId",
 							"value": "{{commentId}}"
-						},
-						{
-							"key": "userId",
-							"value": "{{userId}}"
 						}
 					]
 				},
@@ -175,8 +175,8 @@
 							"        console.log(\"Создан пользователь-владелец:\", owner);\r",
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
-							"        console.log(\"Создан пользователь:\", user1);\r",
 							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
+							"        console.log(\"Создан пользователь:\", user1);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -248,7 +248,7 @@
 							"    pm.expect(target).to.have.property('userName');\r",
 							"    pm.expect(target).to.have.property('created');\r",
 							"    pm.expect(target).to.have.property('updated');\r",
-							"    pm.expect(target).to.have.property('replies');\r",
+							"    pm.expect(target).to.have.property('reply');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -257,7 +257,7 @@
 							"    pm.expect(source.userName).equal(target.userName);\r",
 							"    pm.expect(source.created).equal(target.created);\r",
 							"    pm.expect(source.updated).equal(target.updated);\r",
-							"    pm.expect(target).to.have.property('replies').that.is.null;\r",
+							"    pm.expect(target).to.have.property('reply').that.is.null;\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -286,24 +286,24 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/comment/:commentId/user/:userId",
+					"raw": "{{baseUrl}}/comment/:commentId?userId={{userId}}",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"comment",
-						":commentId",
-						"user",
-						":userId"
+						":commentId"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "{{userId}}"
+						}
 					],
 					"variable": [
 						{
 							"key": "commentId",
 							"value": "{{commentId}}"
-						},
-						{
-							"key": "userId",
-							"value": "{{userId}}"
 						}
 					]
 				},
@@ -329,8 +329,8 @@
 							"        console.log(\"Создан пользователь-владелец:\", owner);\r",
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
-							"        console.log(\"Создан пользователь:\", user1);\r",
 							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
+							"        console.log(\"Создан пользователь:\", user1);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -402,24 +402,24 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{baseUrl}}/comment/:commentId/user/:userId",
+					"raw": "{{baseUrl}}/comment/:commentId?userId={{userId}}",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"comment",
-						":commentId",
-						"user",
-						":userId"
+						":commentId"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "{{userId}}"
+						}
 					],
 					"variable": [
 						{
 							"key": "commentId",
 							"value": "{{commentId}}"
-						},
-						{
-							"key": "userId",
-							"value": "{{userId}}"
 						}
 					]
 				},
@@ -445,8 +445,8 @@
 							"        console.log(\"Создан пользователь-владелец:\", owner);\r",
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
-							"        console.log(\"Создан пользователь:\", user1);\r",
 							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
+							"        console.log(\"Создан пользователь:\", user1);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -538,14 +538,14 @@
 							"    pm.expect(jsonData[0]).to.have.property('userName');\r",
 							"    pm.expect(jsonData[0]).to.have.property('created');\r",
 							"    pm.expect(jsonData[0]).to.have.property('updated');\r",
-							"    pm.expect(jsonData[0]).to.have.property('replies');\r",
+							"    pm.expect(jsonData[0]).to.have.property('reply');\r",
 							"\r",
 							"    pm.expect(jsonData[1]).to.have.property('id');\r",
 							"    pm.expect(jsonData[1]).to.have.property('text');\r",
 							"    pm.expect(jsonData[1]).to.have.property('userName');\r",
 							"    pm.expect(jsonData[1]).to.have.property('created');\r",
 							"    pm.expect(jsonData[1]).to.have.property('updated');\r",
-							"    pm.expect(jsonData[1]).to.have.property('replies');\r",
+							"    pm.expect(jsonData[1]).to.have.property('reply');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -554,14 +554,14 @@
 							"    pm.expect(jsonData[0].userName).to.eql(source.userName);\r",
 							"    pm.expect(jsonData[0].created).to.eql(source.created);\r",
 							"    pm.expect(jsonData[0].updated).to.eql(source.updated);\r",
-							"    pm.expect(jsonData[0].replies).to.eql(source.replies);\r",
+							"    pm.expect(jsonData[0].reply).to.eql(source.reply);\r",
 							"\r",
 							"    pm.expect(jsonData[1].id).to.eql(source1.id);\r",
 							"    pm.expect(jsonData[1].text).to.eql(source1.text);\r",
 							"    pm.expect(jsonData[1].userName).to.eql(source1.userName);\r",
 							"    pm.expect(jsonData[1].created).to.eql(source1.created);\r",
 							"    pm.expect(jsonData[1].updated).to.eql(source1.updated);\r",
-							"    pm.expect(jsonData[1].replies).to.eql(source1.replies);\r",
+							"    pm.expect(jsonData[1].reply).to.eql(source1.reply);\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -628,8 +628,8 @@
 							"        console.log(\"Создан пользователь-владелец:\", owner);\r",
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
-							"        console.log(\"Создан пользователь:\", user1);\r",
 							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
+							"        console.log(\"Создан пользователь:\", user1);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -750,24 +750,24 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/comment/:commentId/user/:userId",
+					"raw": "{{baseUrl}}/comment/:commentId?userId={{userId}}",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"comment",
-						":commentId",
-						"user",
-						":userId"
+						":commentId"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "{{userId}}"
+						}
 					],
 					"variable": [
 						{
 							"key": "commentId",
 							"value": "{{commentId}}"
-						},
-						{
-							"key": "userId",
-							"value": "{{userId}}"
 						}
 					]
 				},
@@ -978,7 +978,6 @@
 							"\r",
 							"        const user1 = await api.addUser(rnd.getUser());\r",
 							"        console.log(\"Создан пользователь:\", user1);\r",
-							"        pm.collectionVariables.set(\"userId\", user1.id);\r",
 							"\r",
 							"        const category = await api.addCategory(rnd.getCategory());\r",
 							"        console.log(\"Создана категория:\", category);\r",
@@ -1100,25 +1099,19 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/admin/comment/:commentId/user/:userId",
+					"raw": "{{baseUrl}}/admin/comment/:commentId",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"admin",
 						"comment",
-						":commentId",
-						"user",
-						":userId"
+						":commentId"
 					],
 					"variable": [
 						{
 							"key": "commentId",
 							"value": "{{commentId}}"
-						},
-						{
-							"key": "userId",
-							"value": "{{userId}}"
 						}
 					]
 				},
@@ -1443,11 +1436,11 @@
 							"        console.log(\"Создан комментарий:\", comment);\r",
 							"        pm.environment.set(\"source\", JSON.stringify(comment));\r",
 							"\r",
-							"        const comment1 = await api.addComment(event.id, user2.id, rnd.getComment(comment.id));\r",
+							"        const comment1 = await api.addComment(event.id, user2.id, rnd.getComment(null));\r",
 							"        console.log(\"Создан комментарий:\", comment1);\r",
 							"        pm.environment.set(\"source1\", JSON.stringify(comment1));\r",
 							"\r",
-							"        const comment2 = await api.addComment(event.id, user3.id, rnd.getComment(comment.id));\r",
+							"        const comment2 = await api.addComment(event.id, owner.id, rnd.getComment(comment.id));\r",
 							"        console.log(\"Создан комментарий:\", comment2);\r",
 							"        pm.environment.set(\"source2\", JSON.stringify(comment2));\r",
 							"\r",
@@ -1489,8 +1482,8 @@
 							"var jsonData = pm.response.json();\r",
 							"console.log(\"jsonData=\", jsonData);\r",
 							"\r",
-							"pm.test(\"Длина списка должна ровняться 1\", function () {\r",
-							"    pm.expect(jsonData.length).to.eql(1);\r",
+							"pm.test(\"Длина списка должна ровняться 2\", function () {\r",
+							"    pm.expect(jsonData.length).to.eql(2);\r",
 							"});\r",
 							"\r",
 							"const source = JSON.parse(pm.environment.get(\"source\"));\r",
@@ -1499,13 +1492,23 @@
 							"const source1 = JSON.parse(pm.environment.get(\"source1\"));\r",
 							"console.log(\"source1=\", source1);\r",
 							"\r",
+							"const source2 = JSON.parse(pm.environment.get(\"source2\"));\r",
+							"console.log(\"source2=\", source2);\r",
+							"\r",
 							"pm.test(\"Комментарий должен содержать поля: id, text, userName, created, updated, replies\", function () {\r",
 							"    pm.expect(jsonData[0]).to.have.property('id');\r",
 							"    pm.expect(jsonData[0]).to.have.property('text');\r",
 							"    pm.expect(jsonData[0]).to.have.property('userName');\r",
 							"    pm.expect(jsonData[0]).to.have.property('created');\r",
 							"    pm.expect(jsonData[0]).to.have.property('updated');\r",
-							"    pm.expect(jsonData[0]).to.have.property('replies');\r",
+							"    pm.expect(jsonData[0]).to.have.property('reply');\r",
+							"\r",
+							"    pm.expect(jsonData[1]).to.have.property('id');\r",
+							"    pm.expect(jsonData[1]).to.have.property('text');\r",
+							"    pm.expect(jsonData[1]).to.have.property('userName');\r",
+							"    pm.expect(jsonData[1]).to.have.property('created');\r",
+							"    pm.expect(jsonData[1]).to.have.property('updated');\r",
+							"    pm.expect(jsonData[1]).to.have.property('reply');\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -1514,7 +1517,14 @@
 							"    pm.expect(jsonData[0].userName).to.eql(source.userName);\r",
 							"    pm.expect(jsonData[0].created).to.eql(source.created);\r",
 							"    pm.expect(jsonData[0].updated).to.eql(source.updated);\r",
-							"    pm.expect(jsonData[0].replies[0]).to.eql(source1);\r",
+							"    pm.expect(jsonData[0].reply).to.eql(source2);\r",
+							"\r",
+							"    pm.expect(jsonData[1].id).to.eql(source1.id);\r",
+							"    pm.expect(jsonData[1].text).to.eql(source1.text);\r",
+							"    pm.expect(jsonData[1].userName).to.eql(source1.userName);\r",
+							"    pm.expect(jsonData[1].created).to.eql(source1.created);\r",
+							"    pm.expect(jsonData[1].updated).to.eql(source1.updated);\r",
+							"    pm.expect(jsonData[1]).to.have.property('reply').that.is.null;\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -1591,19 +1601,19 @@
 					"    } \r",
 					"\r",
 					"    async addComment(eventId, userId, comment, verbose=null) {\r",
-					"        return this.post(\"/comment/event/\" + eventId + \"/user/\" + userId, comment, \"Ошибка при добавлении нового комментария пользователем: \", verbose);\r",
+					"        return this.post(\"/comment/event/\" + eventId + \"?userId=\" + userId, comment, \"Ошибка при добавлении нового комментария пользователем: \", verbose);\r",
 					"    }\r",
 					"\r",
 					"    async updateComment(commentId, userId, comment, verbose=null) {\r",
-					"        return this.patch(\"/comment/\" + commentId + \"/user/\" + userId, comment, \"Ошибка при обновлении комментария пользователем: \", verbose);\r",
+					"        return this.patch(\"/comment/\" + commentId + \"?userId=\" + userId, comment, \"Ошибка при обновлении комментария пользователем: \", verbose);\r",
 					"    }\r",
 					"\r",
 					"    async deleteComment(commentId, userId, verbose=null) {\r",
-					"        return this.delete(\"/comment/\" + commentId + \"/user/\" + userId, null, \"Ошибка при удалении комментария пользователем: \", verbose);\r",
+					"        return this.delete(\"/comment/\" + commentId + \"?userId=\" + userId, null, \"Ошибка при удалении комментария пользователем: \", verbose);\r",
 					"    }\r",
 					"\r",
 					"    async getComment(commentId, userId, verbose=null) {\r",
-					"        return this.get(\"/comment/\" + commentId + \"/user/\" + userId, null, \"Ошибка при получении комментария пользователя: \", verbose);\r",
+					"        return this.get(\"/comment/\" + commentId + \"?userId=\" + userId, null, \"Ошибка при получении комментария пользователя: \", verbose);\r",
 					"    }\r",
 					"\r",
 					"    async getAllCommentsUser(userId, verbose=null) {\r",
@@ -1627,7 +1637,7 @@
 					"    }\r",
 					"\r",
 					"    async getCommentForAdmin(commentId, verbose=null) {\r",
-					"        return this.get(\"/admin/comment/\" + commentId + \"/user/\" + userId, null, \"Ошибка при получении комментария пользователя администратором: \", verbose);\r",
+					"        return this.get(\"/admin/comment/\" + commentId, null, \"Ошибка при получении комментария пользователя администратором: \", verbose);\r",
 					"    }\r",
 					"\r",
 					"    async getAllCommentsByTextForAdmin(text, verbose=null) {\r",
@@ -1795,103 +1805,8 @@
 			"value": "http://localhost:8080"
 		},
 		{
-			"key": "uid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "uid1",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "name",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "mail",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "usersCount",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "catid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "catId",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "catname",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "eid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "eid1",
-			"value": "1",
-			"type": "string"
-		},
-		{
 			"key": "request_body",
 			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "response",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "cid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "cid1",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "compid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "toCheck",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "newDataToSet",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "reqid",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "confirmedRequests",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "fromId",
-			"value": "0",
 			"type": "string"
 		},
 		{
@@ -1904,8 +1819,18 @@
 			"value": ""
 		},
 		{
+			"key": "eventId",
+			"value": "",
+			"type": "string"
+		},
+		{
 			"key": "commentId",
 			"value": ""
+		},
+		{
+			"key": "response",
+			"value": "",
+			"type": "string"
 		},
 		{
 			"key": "response1",
@@ -1917,10 +1842,6 @@
 		},
 		{
 			"key": "response3",
-			"value": ""
-		},
-		{
-			"key": "eventId",
 			"value": ""
 		}
 	]
